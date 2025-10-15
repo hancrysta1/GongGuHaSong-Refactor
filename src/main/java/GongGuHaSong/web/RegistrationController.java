@@ -2,10 +2,14 @@ package GongGuHaSong.web;
 
 
 import GongGuHaSong.domain.Registration;
+import GongGuHaSong.domain.Sell;
 import GongGuHaSong.repository.RegistrationRepository;
+import GongGuHaSong.repository.SellRepository;
 import GongGuHaSong.web.dto.RegistrationSaveDto;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -14,7 +18,7 @@ import java.util.List;
 public class RegistrationController {
 
     private final RegistrationRepository RegistrationRepository;
-
+    private final SellRepository SellRepository;
 
     @GetMapping("/order")
     public List<Registration> findAll(@RequestParam String title){
@@ -29,6 +33,22 @@ public class RegistrationController {
     @PostMapping("/order")
     public Registration save(@RequestBody RegistrationSaveDto dto, @RequestParam String title) {
         //@RequsetBody 어노테이션을 붙인 이유는 json 타입으로 데이터를 받기 위함.
+
+        // 판매 상품 정보 조회
+        List<Sell> sellList = SellRepository.findByTitle(title);
+        if (sellList.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "해당 상품을 찾을 수 없습니다.");
+        }
+
+        Sell sell = sellList.get(0);
+        int minCount = sell.getMin_count();
+
+        // 최소 주문 수량 검증
+        if (dto.getTotal_Count() < minCount) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                "최소 주문 수량은 " + minCount + "개 입니다. (현재 주문 수량: " + dto.getTotal_Count() + "개)");
+        }
+
         Registration registrationEntity = RegistrationRepository.save(dto.toEntity(title));
         return registrationEntity;
     }
