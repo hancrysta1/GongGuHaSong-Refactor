@@ -1,0 +1,168 @@
+.gongguapply{
+    position:relative;
+    top: -80px
+}
+.gongguapplytab {
+    width: 1000px;
+}
+.gongguinfo {
+    position: relative;
+    width: 250px;
+    height: 29px;
+    left: 130px;
+    top: -80px;
+
+    text-align: center;
+
+    font-family: "content";
+    font-style: normal;
+    font-weight: 700;
+    font-size: 24px;
+    line-height: 29px;
+
+    color: #000000;
+}
+
+.formname {
+    /* Rectangle 29 */
+
+
+    /* Rectangle 28 */
+
+
+
+    /* Vector 1 */
+    position: absolute;
+    left: 390px;
+    top: 287px;
+
+    border: 3px solid #0D2D84;
+
+
+    /* 공구 신청 폼 */
+
+    background: #2060AA;
+    border-radius: 10px;
+
+    position: relative;
+    width: 244px;
+    height: 55px;
+    left: 130px;
+    top: -100px;
+
+    font-family: 'IM_Hyemin';
+    font-style: normal;
+    font-weight: 700;
+    font-size: 24px;
+    line-height: 29px;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #FFF4E8;
+}
+
+.line {
+    position: relative;
+    width: 946px;
+    height: 0px;
+    left: 130px;
+    top: -105px;
+    background: #0D2D84;
+    border: 3px solid #0D2D84;
+}
+
+.form {
+    width: 700px;
+}
+
+.buttongroup {
+    position: relative;
+    top: 60px;
+    float: left;
+    margin-bottom: 20px;
+
+}
+
+.applyform {
+        /* 아이디 */
+        position: relative;
+        width: 620px;
+        height: 29px;
+        left: 450px;
+        top: -80px;
+    
+        font-family: 'IM_Hyemin';
+        font-style: normal;
+        font-weight: 400;
+        font-size: 24px;
+        line-height: 29px;
+    
+        color: #000000;
+}
+
+.applyform li {
+    padding-bottom: 15px;
+}
+
+label {
+    margin-right: 15px; 
+    
+}
+
+input {
+    margin-left: 20px;
+    margin-right: -70px;
+}
+
+
+.submit {
+    width: 161px;
+    height: 71px;
+
+    background-color: #01A0C7;
+    border-radius: 5px;
+    border: 0px;
+
+
+    font-family: 'IM_Hyemin';
+    font-style: normal;
+    font-weight: 700;
+    font-size: 24px;
+    line-height: 29px;
+
+    color: #FFF4E8;
+    position: relative;
+    left: -80px;
+    top: 50px;
+}
+
+.reset {
+
+    width: 161px;
+    height: 71px;
+
+    background: #BFDAE7;
+    border-radius: 5px;
+    
+    border: 0px;
+
+    /* 취소하기 */
+
+    font-family: 'IM_Hyemin';
+    font-style: normal;
+    font-weight: 700;
+    font-size: 24px;
+    line-height: 29px;
+    text-align: center;
+    position: relative;
+    left: -60px;
+    top: 50px;
+}
+
+.addbutton {
+    border: 0px;
+    position: relative;
+    left: 10px;
+
+}

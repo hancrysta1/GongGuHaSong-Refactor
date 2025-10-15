@@ -1,0 +1,106 @@
+
+  
+  /* 새마을체: 제목 */
+  @font-face {
+    font-family: 'title';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2108@1.1/HSSaemaul-Regular.woff') format('woff');
+    font-weight: bold;
+    font-style: normal;
+  }
+  
+  /* 헤민체: 본문 */
+  @font-face {
+    font-family: 'content';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2106@1.1/IM_Hyemin-Bold.woff2') format('woff');
+    font-weight: normal;
+    font-style: normal;
+  }
+  
+  /* 리스트에 점없애기 */
+  ul {
+    list-style: none;
+  }
+  a {
+    
+    text-decoration: none;
+    color: #707070;
+  }
+  
+  /* 메뉴바 내부 글 */
+  .menubar {
+    position: sticky;
+    left: 0;
+    top:0;
+    margin-top:0px;
+    padding-top: 120px;
+    color: #707070;
+  
+  }
+  
+  /* 메뉴 바 그리드 위치 */
+  .menugrid {
+    grid-column: 1/2;
+    width: auto;
+    height: auto;
+    background: #BFDAE7;
+    
+  }
+  
+  /* 카테고리 글씨설정(작은거) */
+  .categories {
+    padding-left: 20px;
+    font-size: 20px;
+    font-family: "content";
+    padding-bottom: 5px;
+  }
+  
+  /* 카테고리 글씨 설정 */
+  .menu {
+    width: 230px;
+    font-size: 25px;
+    padding-left: 40px;
+    padding-top: 30px;
+    font-family: "content";
+  }
+  
+  .mymenu {
+    width: 60px;
+    height: 60px;
+  
+    background-color: #BFDAE7;
+    float: left;
+    text-align: center;
+  }
+  
+  .title {
+    position: relative;
+    width: 1220px;
+    font-size: 115px;
+    font-family: "title";
+    color: #0D2D84;
+    text-align: center;
+    top: -100px;
+    background-color: #FFF4E8;
+  }
+  
+
+
+
+
+  .alertbox {
+    position: absolute;
+    left: 205px;
+    top: 130px;
+  }
+
+  .logout {
+    position: absolute;
+    left: 35px;
+    top: 50px;
+    background-color: transparent;
+    border: 0px;
+    font-family: "content";
+    font-size: 18px;
+    color:#707070;
+  }
+ 

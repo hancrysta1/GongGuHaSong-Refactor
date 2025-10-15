@@ -1,0 +1,180 @@
+.newgonggu {
+    position: relative;
+    top: -150px;
+}
+
+.tab {
+    width: 1000px;
+}
+
+
+.dname {
+
+    /* Vector 1 */
+
+    border: 3px solid #0D2D84;
+
+    /* 상세정보 */
+
+    background: #2060AA;
+    border-radius: 10px;
+
+    width: 244px;
+    height: 55px;
+
+
+    font-family: 'IM_Hyemin';
+    font-style: normal;
+    font-weight: 700;
+    font-size: 24px;
+    line-height: 29px;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #FFF4E8;
+
+
+    position: absolute;
+    left: 130px;
+
+
+
+}
+
+
+.line {
+    width: 946px;
+    height: 0px;
+    background: #0D2D84;
+    border: 3px solid #0D2D84;
+    position: absolute;
+    left: 130px;
+    top: 55px;
+}
+
+.details {
+    /*    position: absolute;
+width: 887px;
+height: 1630px;
+
+
+grid-column: 2/3;
+width: auto;
+height: auto;
+
+left: 434px;
+top: 350px;
+
+*/
+
+    background: #FFF4E8;
+    border: 3px solid #0D2D84;
+    border-radius: 10px;
+
+    padding-top: 30px;
+    box-sizing: border-box;
+    padding-left: 50px;
+    ;
+    padding-bottom: 70px;
+    ;
+}
+
+.details li {
+    padding-top: 15px;
+    padding-left: 20px;
+}
+
+.info {
+    position: relative;
+    left: 5px;
+    top: 30px;
+
+    padding-top: 100px;
+    padding-left: 125px;
+    padding-right: 105px;
+    width: 950px;
+    height: auto;
+
+
+    font-family: 'IM_Hyemin';
+    font-style: normal;
+    font-weight: 400;
+    font-size: 24px;
+    line-height: 29px;
+
+    color: #000000;
+
+
+    text-align: left;
+
+}
+
+
+.buttongroup {
+    position: relative;
+    top: 10px;
+    left: 180px;
+    float: left;
+
+}
+
+.application {
+    width: 970px;
+}
+
+
+.submit {
+    width: 161px;
+    height: 71px;
+
+    background-color: #01A0C7;
+    border: 0px;
+    border-color: #2060aa;
+    border-radius: 5px;
+
+    font-family: 'IM_Hyemin';
+    font-style: normal;
+    font-weight: 700;
+    font-size: 24px;
+    line-height: 29px;
+
+    color: #FFF4E8;
+    position: relative;
+    top: -140px;
+}
+
+.reset {
+    width: 161px;
+    height: 71px;
+
+    background: #BFDAE7;
+    border-radius: 5px;
+    border: 0px;
+    border-color: #2060aa;
+
+    /* 취소하기 */
+
+    font-family: 'IM_Hyemin';
+    font-style: normal;
+    font-weight: 700;
+    font-size: 24px;
+    line-height: 29px;
+
+    text-align: center;
+    position: relative;
+    left: 180px;
+    top: -54px;
+
+}
+
+.textareacss {
+    position: relative;
+    top: -10px;
+    left: -30px;
+    padding: 10px;
+}
+
+.inputcss {
+    margin-right: 10px;
+}

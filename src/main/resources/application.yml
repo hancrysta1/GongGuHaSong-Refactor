@@ -1,0 +1,16 @@
+spring:
+  data:
+    mongodb:
+#      uri: mongodb+srv://admin:solabo123@cluster0.vdwax.mongodb.net/?retryWrites=true&w=majority
+      host: localhost
+      port: 27017
+      database: sm
+
+debug: true
+logging:
+  level:
+    org:
+      springframework:
+        context: DEBUG
+        boot:
+          autoconfigure: ERROR
