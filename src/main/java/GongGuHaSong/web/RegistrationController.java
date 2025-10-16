@@ -41,13 +41,19 @@ public class RegistrationController {
         }
 
         Sell sell = sellList.get(0);
-        int minCount = sell.getMin_count();
 
-        // 최소 주문 수량 검증
-        if (dto.getTotal_Count() < minCount) {
+        // 재고 검증
+        int requestedCount = dto.getTotal_Count();
+        int currentStock = sell.getStock();
+
+        if (currentStock < requestedCount) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                "최소 주문 수량은 " + minCount + "개 입니다. (현재 주문 수량: " + dto.getTotal_Count() + "개)");
+                "재고가 부족합니다. (남은 재고: " + currentStock + "개, 요청 수량: " + requestedCount + "개)");
         }
+
+        // 재고 차감
+        sell.setStock(currentStock - requestedCount);
+        SellRepository.save(sell);
 
         Registration registrationEntity = RegistrationRepository.save(dto.toEntity(title));
         return registrationEntity;

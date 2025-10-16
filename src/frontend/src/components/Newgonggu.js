@@ -11,6 +11,7 @@ const Newgonggu = () => {
         category: "",
         price: 0,
         min_count: 0,
+        stock: 0,
         info: "",
         startDate: "",
         finishDate: "",
@@ -55,7 +56,7 @@ const Newgonggu = () => {
         }
       };
 
-    const { title, managerId, category ,price, min_count, info, startDate, finishDate, startResearch, finishResearch, notice, mainPhoto, sizePhoto, accountName, account} = newform;
+    const { title, managerId, category ,price, min_count, stock, info, startDate, finishDate, startResearch, finishResearch, notice, mainPhoto, sizePhoto, accountName, account} = newform;
     
     const onChange = (e) => {
         const { value, name } = e.target; // 우선 e.target 에서 name 과 value 를 추출
@@ -116,6 +117,7 @@ const Newgonggu = () => {
                             <li><label htmlFor="공구 제목">공구 제목</label><input type="text" name="title" placeholder="20자 이내로 입력하세요" onChange={onChange}/></li>
                             <li><label htmlFor="예상 가격">예상 가격</label><input className={styles.inputcss} type="number" name="price" onChange={onChange}/>&nbsp;원</li>
                             <li><label htmlFor="최소 수량">최소 수량</label><input className={styles.inputcss} type="number" name="min_count" onChange={onChange}/>&nbsp;개</li>
+                            <li><label htmlFor="재고">재고</label><input className={styles.inputcss} type="number" name="stock" onChange={onChange}/>&nbsp;개</li>
                             <li>카테고리</li>
                             <li><input type="radio" name="category" id="의류" value="clothes" onChange={onChange}/>&nbsp;
                                 <label htmlFor="의류">의류</label>&emsp;</li>

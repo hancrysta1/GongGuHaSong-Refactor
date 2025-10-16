@@ -16,6 +16,7 @@ public class Sell {
     private String managerId;
     private int price;
     private int min_count;
+    private int stock;
     private String info;
     private Date startDate;
     private Date finishDate;

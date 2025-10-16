@@ -55,12 +55,14 @@ const Productlead = ({ findItem }) => {
                     <li>가격</li><br />
                     <li>공구 진행률</li><br />
                     <li>남은 최소수량</li><br />
+                    <li>재고</li><br />
                 </ul>
                 <ul className={styles.productbox2}>
                     <li >D{Dday}</li><br />
                     <li>{findItem.price}</li><br />
                     <li>{Math.ceil(applyquantity/findItem.min_count * 100)}%</li><br />
                     <li>{findItem.min_count - applyquantity}개</li><br />
+                    <li>{findItem.stock || 0}개</li><br />
                 </ul>
 
 

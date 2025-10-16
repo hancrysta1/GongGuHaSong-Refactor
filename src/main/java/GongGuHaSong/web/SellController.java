@@ -18,22 +18,52 @@ public class SellController {
     private final SellRepository SellRepository;
     private final RegistrationRepository RegistrationRepository;
 
-    /*
-    @PutMapping("/sell")
-    public void sellUpdate(@RequestBody SellSaveDto dto, @RequestParam String managerId, @RequestParam String title){
-        Sell sell1 = SellRepository.findOne(title, managerId);
-        Sell sell2 = dto.toEntity();
-        if (sell1.getManagerId().equals(managerId)) {
-            SellRepository.save(sell2);
-            SellRepository.delete(sell1);
-        }
-    }
-
     @GetMapping("/sell/{id}")
     public Sell findById(@PathVariable String id) {
-        return SellRepository.findById(id).get();
+        return SellRepository.findById(id).orElseThrow(() ->
+            new org.springframework.web.server.ResponseStatusException(
+                org.springframework.http.HttpStatus.NOT_FOUND,
+                "공구를 찾을 수 없습니다."
+            )
+        );
     }
-     */
+
+    @PutMapping("/sell/{id}")
+    public Sell update(@PathVariable String id, @RequestBody SellSaveDto dto) {
+        Sell existingSell = SellRepository.findById(id).orElseThrow(() ->
+            new org.springframework.web.server.ResponseStatusException(
+                org.springframework.http.HttpStatus.NOT_FOUND,
+                "공구를 찾을 수 없습니다."
+            )
+        );
+
+        // 재고 검증
+        if (dto.getStock() < 0) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                org.springframework.http.HttpStatus.BAD_REQUEST,
+                "재고는 0 이상이어야 합니다."
+            );
+        }
+
+        // 기존 데이터 업데이트
+        existingSell.setTitle(dto.getTitle());
+        existingSell.setPrice(dto.getPrice());
+        existingSell.setMin_count(dto.getMin_count());
+        existingSell.setStock(dto.getStock());
+        existingSell.setInfo(dto.getInfo());
+        existingSell.setStartDate(dto.getStartDate());
+        existingSell.setFinishDate(dto.getFinishDate());
+        existingSell.setStartResearch(dto.getStartResearch());
+        existingSell.setFinishResearch(dto.getFinishResearch());
+        existingSell.setNotice(dto.getNotice());
+        existingSell.setCategory(dto.getCategory());
+        existingSell.setMainPhoto(dto.getMainPhoto());
+        existingSell.setSizePhoto(dto.getSizePhoto());
+        existingSell.setAccountName(dto.getAccountName());
+        existingSell.setAccount(dto.getAccount());
+
+        return SellRepository.save(existingSell);
+    }
 
 
     @GetMapping("/sell/all")
@@ -56,6 +86,15 @@ public class SellController {
     public Sell save(@RequestBody SellSaveDto dto) {
         String title = dto.getTitle();
         String managerId = dto.getManagerId();
+        int stock = dto.getStock();
+
+        // 재고 검증
+        if (stock < 0) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                org.springframework.http.HttpStatus.BAD_REQUEST,
+                "재고는 0 이상이어야 합니다. (현재 재고: " + stock + "개)"
+            );
+        }
 
         // 제목 + 판매자 ID로 중복 체크
         List<Sell> existing = SellRepository.findByTitleAndManagerId(title, managerId);

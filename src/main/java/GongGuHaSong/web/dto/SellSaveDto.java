@@ -12,6 +12,7 @@ public class SellSaveDto {
     private String managerId;
     private int price;
     private int min_count;
+    private int stock;
     private String info;
     private Date startDate;
     private Date finishDate;
@@ -30,6 +31,7 @@ public class SellSaveDto {
         sell.setManagerId(managerId);
         sell.setPrice(price);
         sell.setMin_count(min_count);
+        sell.setStock(stock);
         sell.setInfo(info);
         sell.setStartDate(startDate);
         sell.setFinishDate(finishDate);
