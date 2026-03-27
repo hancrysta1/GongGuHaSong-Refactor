@@ -1,116 +1,121 @@
 # 공구하송 — MSA 공동구매 플랫폼
 
-> 개인사업자 중심으로 파편화된 공동구매를 하나의 플랫폼에서 실시간으로 참여할 수 있는 서비스
->
+> 개인사업자 중심으로 파편화된 공동구매를 하나의 플랫폼에서 실시간으로 참여할 수 있는 서비스<br>
 > 6개 서비스 · 3종 DB · Kafka 이벤트 기반 · SAGA 보상 트랜잭션 · k6 부하 테스트 정량 검증
+<br>
 
-
+<br>
 
 ## 프로젝트 개요
 
 | 항목 | 내용                                                |
 |------|---------------------------------------------------|
 | 원본 개발 | 2022.03 ~ 2022.06 (4명 中 백엔드)                      |
+| 원본 깃허브 | https://github.com/GongGuHaSong/GongGuHaSong                      |
 | 리팩토링 | 2025.10 ~ 2026.01 (1인, 아키텍처/결제/검색/인프라 전체)         |
 | 수상 | 숙명여대 SOLUX 27기 상반기 우수상                            |
 | 리팩토링 방식 | 아키텍처 설계, 기술 선택, 결과 검증은 직접 수행.<br/>코드 작성은 AI 도구 활용. |
 
+<br>
 
 ## 서비스 아키텍처
-
-```
-                              ┌──────────────────────────────────────────────┐
-                              │           Docker Compose 환경                │
-                              │                                              │
-Browser (React) ──REST────────→ │  Member   Product   Order   Payment  Point  │
-                              │  :8081    :8082    :8083   :8085    :8084   │
-                              │  MongoDB  MongoDB  MongoDB  MySQL    MySQL  │
-                              │           +Redis           (SAGA)    +Redis │
-  │                           │                                              │
-  └──── WebSocket ←───────────│── Search (:8086, ES+Nori+MongoDB)            │
-     (실시간 랭킹만)           │                                              │
-                              │  ─ Kafka ─  ─ Redis ─  ─ Zookeeper ─       │
-                              │  ─ MongoDB ─  ─ MySQL ─  ─ ES ─            │
-                              └──────────────────────────────────────────────┘
-```
-
-### 주문·결제 흐름
-
-주문과 결제는 **별도의 요청**으로 분리되어 있다.
-
-```
-[1단계: 주문 생성]
-
-Browser ──POST /order──→ Order ──Feign(동기)──→ Product (재고 확인 + 차감)
-                           │                    ↑ 재고 부족 시 즉시 거절해야 하므로 동기
-                           │
-                      Kafka 'order-events' (비동기 팬아웃)
-                           │    ↑ 주문 확정 후 후속 처리. 결제와 무관한 작업들.
-                     ┌─────┼──────────┐
-                     ▼     ▼          ▼
-                 Payment  Point     Search
-                 (재고    (포인트    (랭킹 갱신
-                  예약)    적립)     → WebSocket)
-```
-
-```
-[2단계: 결제 — SAGA Orchestration]
-
-Browser ──POST /payment──→ Payment (SAGA 오케스트레이터)
-                              │
-                  ┌───────────┼───────────┐
-                  ▼           ▼           ▼
-             STEP 1      STEP 2      STEP 3
-             HMAC        결제 수단     결제 기록
-             위변조 검증   처리        MySQL 저장
-                          │
-                    ┌──────┴──────┐
-                    ▼             ▼
-              포인트 차감      카드 결제
-              RestTemplate     (승인번호
-              (동기)            발급)
-                 ▼
-               Point
-               SELECT FOR UPDATE
-               (잔액 부족 시 즉시 중단)
-```
-
-```
-[결제 실패 시 — SAGA 역순 보상]
-
-STEP 2~3 실패 감지
-    │
-    ├──→ ① 카드 환불     ──실패 시──→ CompensationOutbox 저장
-    ├──→ ② 포인트 복구   ──실패 시──→ CompensationOutbox 저장
-    └──→ ③ 재고 복구     ──실패 시──→ CompensationOutbox 저장
-                                          │
-                                    30초 폴링 스케줄러
-                                    (최대 5회 재시도,
-                                     초과 시 FAILED 마킹)
-```
-
-#### 동기/비동기 선택 근거
-
-| 구간 | 방식 | 이유 |
-|------|------|------|
-| Order → Product (재고 차감) | Feign 동기 | 재고 부족 시 주문 자체를 거절해야 함 |
-| Order → Kafka 팬아웃 | 비동기 | 재고예약·포인트적립·랭킹갱신은 주문 응답에 불필요 |
-| Payment → Point (포인트 차감) | RestTemplate 동기 | 잔액 부족이면 결제를 중단해야 함 |
-| 보상 실패 → Outbox | 비동기 폴링 | 보상 대상 서비스가 일시 장애여도 최종 복구 보장 |
+<img width="2940" height="1077" alt="image" src="https://github.com/user-attachments/assets/ea1d12cc-0405-4c2d-9dc8-3ac79c09542d" />
 
 <br>
 
-## What is different?
+## 실행 방법
 
-### 원본
-- 깃허브 링크 : 
+```bash
+docker compose up -d
+# → http://localhost:3002
+```
+
+<br>
+
+## 프로젝트 구조
+
+```
+GongGuHaSong/
+├── member-service/         # 회원 관리 (MongoDB)
+├── product-service/        # 상품 관리 (MongoDB + Redis)
+├── order-service/          # 주문 처리 (MongoDB + Kafka)
+├── payment-service/        # 결제 — SAGA Orchestrator (MySQL)
+├── point-service/          # 포인트 — SELECT FOR UPDATE (MySQL)
+├── search-service/         # 검색 + 실시간 랭킹 (ES + MongoDB)
+└── src/frontend/           # React
+```
+
+<br>
+
+## 주문·결제 흐름
+### 주문 → Kafka 팬아웃
+
+> 1건 주문이 4개 서비스에 동시 전달되는 이벤트 드리븐 구조
+> 
+<br>
+<img width="2580" height="1074" alt="image" src="https://github.com/user-attachments/assets/8aa5f892-ddee-4bd9-80d7-f7c6d0595c8a" />
+<br>
+
+| 단계 | 흐름 | 방식 | 이유 |
+|------|------|------|------|
+| 재고 차감 | Order → Product | Feign 동기 | 재고 부족 시 즉시 거절 |
+| 후속 처리 | Order → Kafka → Payment, Point, Search, Product | 비동기 팬아웃 | 재고예약·적립·랭킹·캐시 = 도메인 다름 |
+
+
+<br>
+<br>
+
+### 결제 — SAGA Orchestration
+<img width="521" height="495" alt="image" src="https://github.com/user-attachments/assets/6f35b9d6-4463-4d34-94f9-5ab2825d73ce" />
+<br>
+
+> Payment가 오케스트레이터로서 STEP 1~3을 순서대로 실행. 실패 시 역순 보상.
+
+<br>
+
+<img width="659" height="463" alt="image" src="https://github.com/user-attachments/assets/aabfa116-3f28-4446-9022-df06869ebdbc" />
+
+<br>
+
+
+| | 성공 흐름 | 실패 시 보상 |
+|---|---|---|
+| STEP 1 | HMAC 위변조 검증 | — |
+| STEP 2 | 포인트 차감 (동기) + 카드 결제 | ② 포인트 복구, ① 카드 환불 |
+| STEP 3 | 결제 기록 MySQL 저장 | ③ 재고 복구 |
+| 보상 실패 시 | — | CompensationOutbox 저장 → 30초 폴링 재시도 (최대 5회) |
+
+
+
+<br>
+<br>
+
+## 실시간 검색 랭킹
+
+> ES + Nori 한국어 형태소 분석 · 이벤트 드리븐 즉시 갱신 + 60초 폴링 폴백
+
+| 항목 | 내용 |
+|------|------|
+| 점수 산정 | 검색횟수 x 0.4 + 주문량 x 0.6 (최근 1시간) |
+| 갱신 방식 | 주문 시 Kafka → 즉시 재계산, 검색 시 직접 재계산 |
+| 전달 | Redis 캐시 + WebSocket push |
+| 자동완성 | `/suggest` — ES 조회만, 로그 미저장 (랭킹 오염 방지) |
+
+<br>
+<br>
+
+# What is different?
+
+## 원본
 - 공구 참여 요청, 쪽지, 찜, 회원가입 기능 개발
 - MongoDB 설계, React 프론트엔드
 
+<br>
+<br>
 
-### 리팩토링
+## 리팩토링
 
-**기능**
+### 기능
 
 | | Before (2022, 팀) | After (리팩토링, 1인) |
 |---|---|---|
@@ -120,23 +125,25 @@ STEP 2~3 실패 감지
 | 검색 | 없음 | ES + Nori 한국어 검색, 실시간 랭킹 (신규) |
 
 <br>
-
-**아키텍처**
-
-| | Before | After |
-|---|---|---|
-| 구조 | 모놀리식 Spring Boot 1개 | MSA 6개 서비스 분리 |
-| 배포 | 없음 | Docker Compose |
-| 서비스 디스커버리 | — | Docker Compose DNS + FeignClient url 직접 지정 |
-| 서비스 간 통신 | — | Feign(동기) + Kafka(비동기) + RestTemplate |
-| 결제 트랜잭션 | — | SAGA Orchestration + CompensationOutbox |
-| 동시성 제어 | — | MySQL `SELECT FOR UPDATE` |
-| DB | MongoDB 1개 | MongoDB + MySQL + ES (Polyglot) |
-| 부하 테스트 | 없음 | k6 동시 1000명 동시성 검증 + 장애 주입 SAGA 보상 검증 (별도 테스트) |
-
 <br>
 
-**기술 스택**
+### 아키텍처
+
+| | Before | After | 왜 |
+|---|---|---|---|
+| 구조 | 모놀리식 Spring Boot 1개 | MSA 6개 서비스 분리 | 서비스 별 독립 배포 + DB 기술 선택 자유  |
+| 배포 | — | Docker Compose | 6개 서비스 + 인프라 통합 구동 |
+| 서비스 간 통신   | — | Feign(동기) + Kafka(비동기) + RestTemplate | 재고·잔액 검증은 동기, 적립·랭킹 등 후속 처리는 비동기 |
+| 결제 트랜잭션 | — | SAGA Orchestration + CompensationOutbox | MSA에서 `@Transactional`이 안 통하므로 역순 보상 + 실패 시 Outbox 재시도 |
+| 동시성 제어 | — | MySQL `SELECT FOR UPDATE` | MongoDB `findAndModify`로는 차감+이력 원자성 불가 → MySQL 전환 |
+| DB | MongoDB 1개 | MongoDB + MySQL + ES (Polyglot) | 금전 도메인은 ACID 필수 → MySQL, 검색은 역인덱스 필요 → ES |
+| 부하 테스트  | — | k6 동시 300명 22,000건 + 장애 주입 SAGA 검증 | 정합성을 수치로 증명 (유실률 10.35% → 0.08%) |
+
+
+<br>
+<br>
+
+### 기술 스택
 
 | 영역 | Before | After |
 |---|---|---|
@@ -147,8 +154,9 @@ STEP 2~3 실패 감지
 | Test | — | ![k6](https://img.shields.io/badge/k6-Load_Test-7D64FF?logo=k6&logoColor=white) |
 
 <br>
+<br>
 
-## 주요 성과
+### 주요 성과
 
 | 항목 | Before | After |
 |------|--------|-------|
@@ -157,8 +165,15 @@ STEP 2~3 실패 감지
 | 포인트 차감-이력 불일치 | 발생 (MongoDB 별도 연산) | 0건 (MySQL @Transactional) |
 
 <br>
+<br>
 
 ## 시연
+- 실시간 검색어 (키워드) <br>
+![Image](https://github.com/user-attachments/assets/69684d57-30f6-46e9-82e0-77e06751ee69)
+
+- 주문 & 결제
+<img width="1209" height="752" alt="image" src="https://github.com/user-attachments/assets/4b06a5b7-2c85-4425-b468-178a3f0fb1fa" />
+
 
 <!-- 아래 항목들을 GIF 또는 스크린샷으로 추가 -->
 
@@ -172,7 +187,7 @@ STEP 2~3 실패 감지
 > 시연 영상/GIF 준비 후 교체 예정
 
 <br>
-
+<br>
 
 ## 기술적 의사결정 & 트러블슈팅
 
@@ -211,24 +226,3 @@ STEP 2~3 실패 감지
 
 <br>
 
-## 실행 방법
-
-```bash
-docker compose up -d
-# → http://localhost:3002
-```
-
-<br>
-
-## 프로젝트 구조
-
-```
-GongGuHaSong/
-├── member-service/         # 회원 관리 (MongoDB)
-├── product-service/        # 상품 관리 (MongoDB + Redis)
-├── order-service/          # 주문 처리 (MongoDB + Kafka)
-├── payment-service/        # 결제 — SAGA Orchestrator (MySQL)
-├── point-service/          # 포인트 — SELECT FOR UPDATE (MySQL)
-├── search-service/         # 검색 + 실시간 랭킹 (ES + MongoDB)
-└── src/frontend/           # React
-```
