@@ -59,8 +59,8 @@ const Login = () => {
 
         <ul className={styles.forminput}>
           
-            <li><input type="text" name="userId" maxLength="20" value={inputId} onChange={handleInputId}/></li>
-            <li><input type="password" name="userPassward" maxLength="20" value={inputPw} onChange={handleInputPw}/></li>
+            <li><input type="text" name="userId" maxLength="50" value={inputId} onChange={handleInputId}/></li>
+            <li><input type="password" name="userPassward" maxLength="50" value={inputPw} onChange={handleInputPw}/></li>
             <div className={styles.buttongroup}>
               <input className={styles.submit} id="submit" type="submit" value="로그인" onClick={onClickLogin}/>
               <Link to="/join"><input className={styles.reset} id="reset" type="reset" value="회원가입" /></Link>

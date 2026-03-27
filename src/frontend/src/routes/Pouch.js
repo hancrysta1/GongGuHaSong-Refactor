@@ -2,6 +2,7 @@ import Title from "../components/Title";
 import Productcomponent from "../components/Productcomponent";
 import Menubar from "../components/Menubar";
 import styles from "../css/App.module.css";
+import RealTimeRanking from "../components/RealTimeRanking";
 import { useState, useEffect } from "react";
 
 const Clothes = ({product}) => {
@@ -45,9 +46,11 @@ const Clothes = ({product}) => {
       <Productcomponent key={main._id} 
       main={main}
       />
-      ): <div className={styles.notice}>아직 진행중인 공구가 없습니다.</div>} 
+      ): <div className={styles.notice}>아직 등록된 상품이 없습니다.</div>} 
       </div>
-
+        <div style={{ padding: '20px', background: '#FFF4E8' }}>
+          <RealTimeRanking />
+        </div>
 
     </div>
   );

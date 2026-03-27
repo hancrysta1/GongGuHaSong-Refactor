@@ -1,0 +1,14 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: member-service
+  data:
+    mongodb:
+      host: localhost
+      port: 27017
+      database: member-db
+      username: member_user
+      password: member-secret-2026
+      authentication-database: member-db

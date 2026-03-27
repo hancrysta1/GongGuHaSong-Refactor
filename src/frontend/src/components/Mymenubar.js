@@ -28,9 +28,9 @@ function Mymenubar() {
         </div>
 
         <br />
-        <p className={styles.menu}><br /><Link to="/order" style={{color: "#707070"}}>참여중인 공구</Link></p>
-        <p className={styles.menu}><Link to="/sale" style={{color: "#707070"}}>진행중인 공구</Link></p>
-        <p className={styles.menu}><Link to="/wish" style={{color: "#707070"}}>찜한 공구</Link></p>
+        <p className={styles.menu}><br /><Link to="/order" style={{color: "#707070"}}>구매 내역</Link></p>
+        <p className={styles.menu}><Link to="/sale" style={{color: "#707070"}}>판매중인 상품</Link></p>
+        <p className={styles.menu}><Link to="/wish" style={{color: "#707070"}}>찜한 상품</Link></p>
         <p className={styles.menu}><Link to="/privacy" style={{color: "#707070"}}>회원정보 수정</Link></p>
       
         <button className={styles.logout} onClick={onLogout}>로그아웃</button>

@@ -6,6 +6,7 @@ import axios from "axios";
 import { useEffect } from "react";
 import Productcomponent from "../components/Productcomponent";
 import Quantitycomponent from "../components/Quantitycomponent"
+import RealTimeRanking from "../components/RealTimeRanking";
 
 const Wish = ({product}) => {
   const [main, getMain] = useState([]);
@@ -175,6 +176,9 @@ const Wish = ({product}) => {
           
           
              </div>
+        <div style={{ padding: '20px', background: '#FFF4E8' }}>
+          <RealTimeRanking />
+        </div>
       </div>
     );
 

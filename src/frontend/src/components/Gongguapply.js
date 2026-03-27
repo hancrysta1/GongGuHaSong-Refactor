@@ -1,162 +1,126 @@
 import React, { useEffect } from 'react';
 import styles from '../css/Gongguapply.module.css';
-import { useState, useRef } from "react";
-import Iteration from './Iteration';
+import { useState } from "react";
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
 function Gongguapply({ findItem }) {
     const history = useNavigate();
-    const [inputs, setInputs] = useState({
-        person: '',
-        p_tel: '',
-        quantity: '',
-        sname: '',
-        y_time: '',
-        address: '',
-        method: ''
-    });
+    const [quantity, setQuantity] = useState(1);
+    const [method, setMethod] = useState('');
+    const [address, setAddress] = useState('');
 
-
-
-
-    const { person, p_tel, quantity, size, sname, y_time,  address, method } = inputs;
-
-    const onChange = (e) => {
-        const { value, name } = e.target; // 우선 e.target 에서 name 과 value 를 추출
-        setInputs({
-          ...inputs, // 기존의 input 객체를 복사한 뒤
-          [name]: value // name 키를 가진 값을 value 로 설정
-        });
-      };
-
-
-    const onReset = () => {
-        setInputs({
-            person: '',
-            p_tel: '',
-            quantity: '',
-            size: '',
-            name: '',
-            y_time: '',
-            address: '',
-        })
-    };
-
-    const [inputText, setInputText] = useState('');
-    const [sizes, setSizes] = useState([]);
-
-    const handlesizeChange = e => setInputText(e.target.value);
-
-    //추가하는 함수
-    const handleClick = () => {
-        setSizes([...sizes, inputText]);
-        
-        setInputText('');
-
-    }
-
-  
-
-    const handleDelete = id => {
-        const newList = sizes.filter(size => size.id !== id);
-        setSizes(newList);
-    };
-
-
+    const maxQuantity = findItem.stock || 99;
 
     const handleSubmit = async(e) => {
         e.preventDefault();
         await axios({
             method: "POST",
-            url: '/order', 
+            url: '/order',
             data: {
-            userId: inputs.person,
-            phoneNumber: inputs.p_tel,
-            total_Count: inputs.quantity,
-            userName: inputs.sname,
-            depositTime: inputs.y_time,
-            method: inputs.method,
-            address: inputs.address,
-            sizeCount: sizes
+                userId: sessionStorage.user_id,
+                total_Count: quantity,
+                method: method,
+                address: address,
             },
             params: {title: findItem.title}
-            
-           
           }).then((res) => {
-            alert("신청되었습니다!");
             if (res.status === 200) {
-                
+                alert("구매가 완료되었습니다!");
               history(`/product/${findItem._id}`);
-            } else if (res === null){ 
-
             }
-            else { }
+          }).catch((error) => {
+            if (error.response) {
+                const errorMessage = error.response.data.message || error.response.data.error || error.response.data;
+                if (error.response.status === 404) {
+                    alert(typeof errorMessage === 'string' ? errorMessage : "해당 상품을 찾을 수 없습니다.");
+                } else if (error.response.status === 400) {
+                    alert(typeof errorMessage === 'string' ? errorMessage : "재고가 부족합니다.");
+                } else {
+                    alert("구매에 실패했습니다: " + (typeof errorMessage === 'string' ? errorMessage : error.message));
+                }
+            } else {
+                alert("서버와 연결할 수 없습니다.");
+            }
           });
-    
-
-
-
     }
-
-useEffect (() => {
-    setInputs({...inputs, person: sessionStorage.user_id});
-
-},[])
 
     return (
         <div className={styles.gongguapply}>
             <div className={styles.gongguapplytab}>
-                <div className={styles.formname}>공구 신청 폼</div>
+                <div className={styles.formname}>구매 신청</div>
                 <div className={styles.line}></div>
             </div>
 
             <div className={styles.gongguinfo}>
-
                 <p>{findItem.title}</p>
-                <img src={findItem.mainPhoto} alt="상품사진" style={{ width: "250px", height: "250px" }} />
-
-                <p>가격 {findItem.price}원</p>
-                <p>입금 정보 <br/><br/>{findItem.accountName}<br /><br />{findItem.account}</p>
-                <img src={findItem.sizePhoto} alt="상세사항" style={{ width: "250px", height: "150px" }} />
-
+                <img src={findItem.mainPhoto} alt="상품사진" style={{ width: "250px", height: "250px", objectFit: 'cover', borderRadius: '10px' }} />
+                <p>가격 <b>{Number(findItem.price).toLocaleString()}원</b></p>
+                <p style={{ fontSize: '14px', color: '#666', marginTop: '5px' }}>
+                    최소수량 <b style={{ color: '#0D2D84' }}>{findItem.min_count}개</b> &nbsp;|&nbsp;
+                    재고 <b>{findItem.stock || 0}개</b>
+                </p>
             </div>
 
             <div className={styles.form}>
                 <ul className={styles.applyform}>
                     <form onSubmit={handleSubmit}>
 
-                        <li><label htmlFor="id">아이디&nbsp;&nbsp;&nbsp;</label>&nbsp;&nbsp;&nbsp;{sessionStorage.user_id}</li>
-                        <li><label htmlFor="tel">연락처&nbsp;&nbsp;&nbsp;</label><input type="tel" name="p_tel" placeholder="010-1234-5678"
-                            pattern="[0-9]{3}-[0-9]{4}-[0-9]{4}" maxLength={13} onChange={onChange}/></li>
-                        <li><label htmlFor="quantity">구매수량</label><input type="number" name="quantity" min="1" step="1" placeholder="총 구매수량을 적어주세요" onChange={onChange}/></li>
-
-                        <li>옵션&nbsp;&emsp; <input
-                            value={inputText}
-                            onChange={handlesizeChange}
-                            placeholder="옵션: 수량 입력"
-                        />
-                            <button type="button" onClick={handleClick} className={styles.addbutton}>추가</button>
-                            {sizes.map((sizes) =><div key={sizes.index}>
-                            <p >
-                                 {sizes} <button type="button" onClick={() => handleDelete(sizes.id)}>삭제</button></p>
+                        <li style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+                            <label>구매수량</label>
+                            <div style={{ display: 'flex', alignItems: 'center', border: '2px solid #0D2D84', borderRadius: '8px', overflow: 'hidden' }}>
+                                <button type="button" onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                                    style={{ width: '40px', height: '40px', border: 'none', background: '#f0f0f0', fontSize: '20px', cursor: 'pointer' }}>−</button>
+                                <span style={{ width: '50px', textAlign: 'center', fontSize: '18px', fontWeight: 'bold', fontFamily: 'content' }}>{quantity}</span>
+                                <button type="button" onClick={() => setQuantity(Math.min(maxQuantity, quantity + 1))}
+                                    style={{ width: '40px', height: '40px', border: 'none', background: '#f0f0f0', fontSize: '20px', cursor: 'pointer' }}>+</button>
                             </div>
-                                 )}
+                            <span style={{ fontSize: '14px', color: '#999' }}>최대 {maxQuantity}개</span>
                         </li>
 
-                        <li><label htmlFor="name">입금자명</label><input type="text" name="sname" onChange={onChange}/></li>
+                        <li style={{ marginBottom: '15px' }}>
+                            <div style={{ fontWeight: 'bold', fontSize: '18px', color: '#0D2D84', marginBottom: '10px' }}>
+                                총 결제금액: {(findItem.price * quantity).toLocaleString()}원
+                            </div>
+                        </li>
 
-                        <li><label htmlFor="time">입금시간</label><input type="datetime-local" name="y_time" onChange={onChange}/></li>
+                        <li style={{ marginBottom: '10px' }}><label>배부방식</label></li>
+                        <li style={{ marginBottom: '5px' }}>
+                            <input type="radio" name="method" id="off" value="현장배부" onChange={(e) => setMethod(e.target.value)}/>
+                            <label htmlFor="off"> 오프라인 현장 배부</label>
+                        </li>
+                        <li style={{ marginBottom: '10px' }}>
+                            <input type="radio" name="method" id="deliver" value="택배" onChange={(e) => setMethod(e.target.value)}/>
+                            <label htmlFor="deliver"> 택배</label>
+                        </li>
 
-                        <li><label htmlFor="method">배부방식</label></li>
-                        <li> <input type="radio" name="method" id="off" value="현장배부" onChange={onChange}/><label htmlFor="off">오프라인 현장 배부</label></li>
-
-                        <li><input type="radio" name="method" id="deliver" value="택배" onChange={onChange}/><label htmlFor="deliver">택배</label></li>
-                        <li><label htmlFor="address">&nbsp;&nbsp;&nbsp;주소&nbsp;&nbsp;&nbsp;</label><input type="text" name="address" placeholder="택배 배부를 선택하신 경우에만 적어주세요" style={{ width: "420px" }} onChange={onChange}/></li>
+                        {method === '택배' && (
+                            <li style={{ marginBottom: '15px' }}>
+                                <label>주소&nbsp;&nbsp;</label>
+                                <input type="text" value={address} placeholder="배송 주소를 입력해주세요"
+                                    style={{ width: '400px', padding: '8px', borderRadius: '5px', border: '1px solid #ccc' }}
+                                    onChange={(e) => setAddress(e.target.value)}/>
+                            </li>
+                        )}
 
                         <div className={styles.buttongroup}>
-                            <button className={styles.submit} type="submit" >공구참여</button>&nbsp;
-                            <button onClick={onReset} className={styles.reset} type="reset">취소하기</button>
+                            <button className={styles.submit} type="submit">결제하기</button>&nbsp;
+                            <button type="button" className={styles.submit} style={{ backgroundColor: '#F48B29', left: '-20px' }} onClick={() => {
+                                const cart = JSON.parse(sessionStorage.getItem('cart') || '[]');
+                                const existingIndex = cart.findIndex(item => item.title === findItem.title);
+                                if (existingIndex >= 0) {
+                                    cart[existingIndex].quantity += quantity;
+                                } else {
+                                    cart.push({
+                                        title: findItem.title,
+                                        price: findItem.price,
+                                        quantity: quantity,
+                                        mainPhoto: findItem.mainPhoto
+                                    });
+                                }
+                                sessionStorage.setItem('cart', JSON.stringify(cart));
+                                alert('장바구니에 담았습니다');
+                            }}>장바구니 담기</button>
                             <br /><br />
                         </div></form></ul>
             </div>

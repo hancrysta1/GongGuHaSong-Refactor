@@ -3,6 +3,7 @@ import Productcomponent from "../components/Productcomponent";
 import Mymenubar from "../components/Mymenubar";
 import styles from "../css/App.module.css";
 import Quantitycomponent from "../components/Quantitycomponent";
+import RealTimeRanking from "../components/RealTimeRanking";
 import { useState,useEffect } from "react";
 
 const Sale = ({product}) => {
@@ -126,7 +127,9 @@ const Sale = ({product}) => {
 
 
       </div>
-
+        <div style={{ padding: '20px', background: '#FFF4E8' }}>
+          <RealTimeRanking />
+        </div>
 
     </div>
   );

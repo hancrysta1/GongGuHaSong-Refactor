@@ -2,6 +2,7 @@ import Title from "../components/Title";
 import Quantitycomponent from "../components/Quantitycomponent";
 import Menubar from "../components/Menubar";
 import styles from "../css/App.module.css";
+import RealTimeRanking from "../components/RealTimeRanking";
 import { useState, useEffect } from "react";
 
 const Quantityinfo = ({product}) => {
@@ -44,10 +45,13 @@ const Quantityinfo = ({product}) => {
       )}
 
       </div>
+        <div style={{ padding: '20px', background: '#FFF4E8' }}>
+          <RealTimeRanking />
+        </div>
     </div>
   );
 
-      
+
 
   }
 

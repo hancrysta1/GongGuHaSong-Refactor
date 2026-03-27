@@ -97,8 +97,8 @@ await axios({
 
       <ul className={styles.forminput}>
         <form onSubmit={handleSubmit}>
-          <li><input type="text" id="name" name="name" maxLength="20" onChange={onChange} value={newmember.name}/></li>
-          <li><input type="text" id="pid" name="pid" maxLength="20" onChange={onChange} value={newmember.pid} />
+          <li><input type="text" id="name" name="name" maxLength="50" onChange={onChange} value={newmember.name}/></li>
+          <li><input type="text" id="pid" name="pid" maxLength="50" onChange={onChange} value={newmember.pid} />
           </li>
           <li><input type="password" id="pwd" name="pwd" minLength="8" onChange={onChange} value={newmember.pwd} /></li>
           <li><input type="password" name="checkPassword" minLength="8" onChange={passwordcheck} /></li>

@@ -36,7 +36,7 @@ const Check = ({check, findItem}) => {
         <div className={styles.check}>
             <div className={styles.tab}>
                 <div className={styles.formname}>
-                    공구 신청자 리스트
+                    구매자 리스트
                 </div>
                 <div className={styles.line1}></div>
             </div>
@@ -49,8 +49,8 @@ const Check = ({check, findItem}) => {
                     <h2 className={styles.name}>{findItem.title}</h2>
                     <ul className={styles.box1}>
                         <li>남은 기한</li>
-                        <li>공구 진행률</li>
-                        <li>공구 참여 수</li>
+                        <li>구매 달성률</li>
+                        <li>구매 참여 수</li>
                     </ul>
                     <ul className={styles.box2}>
                         <li>D{Dday}</li>

@@ -66,15 +66,17 @@ const Product = ({ findItem }) => {
     //수량 계산
     const [applyquantity, getApplyquantity] = useState(0);
     const calculateRate = async () => {
-        await axios.get('/sell',
-            { params: { title: findItem.title } }).then((res) => {
-
-                getApplyquantity(res.data);
-
-            }
-
-            )
+        try {
+            const res = await axios.get('/sell', { params: { title: findItem.title } });
+            const data = Array.isArray(res.data) ? res.data.length : (typeof res.data === 'number' ? res.data : 0);
+            getApplyquantity(data);
+        } catch(e) {
+            getApplyquantity(0);
+        }
     }
+
+    const percent = Math.min(Math.ceil(applyquantity / findItem.min_count * 100), 100);
+    const isAchieved = applyquantity >= findItem.min_count;
 
 
 
@@ -106,24 +108,41 @@ const Product = ({ findItem }) => {
                 <div className={styles.productmanager}>{findItem.managerId}</div>
                 <ul className={styles.image}><img src={findItem.mainPhoto} alt="옷" style={{ width: "350px", height: "350px" }} /></ul>
                 <ul className={styles.productbox1}>
-
                     <li>남은 기간</li><br />
                     <li>가격</li><br />
-                    <li>공구 진행률</li><br />
-                    <li>남은 최소수량</li><br />
+                    <li>구매 달성률</li><br />
+                    <li>최소수량</li><br />
                     <li>재고</li><br />
+                    <li>달성 여부</li><br />
                 </ul>
                 <ul className={styles.productbox2}>
-                    <li >D{Dday}</li><br />
-                    <li>{findItem.price}</li><br />
-                    <li>{Math.ceil(applyquantity / findItem.min_count * 100)}%</li><br />
-                    <li>{findItem.min_count - applyquantity}개</li><br />
+                    <li>D{Dday}</li><br />
+                    <li>{Number(findItem.price).toLocaleString()}원</li><br />
+                    <li>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <div style={{ width: '120px', height: '12px', background: '#e0e0e0', borderRadius: '6px', overflow: 'hidden' }}>
+                                <div style={{ width: `${percent}%`, height: '100%', background: isAchieved ? '#4CAF50' : '#FF9800', borderRadius: '6px', transition: 'width 0.5s' }}></div>
+                            </div>
+                            <span>{percent}%</span>
+                        </div>
+                    </li><br />
+                    <li style={{ fontWeight: 'bold', color: '#0D2D84' }}>{findItem.min_count}개</li><br />
                     <li>{findItem.stock || 0}개</li><br />
+                    <li>
+                        <span style={{
+                            padding: '4px 14px',
+                            borderRadius: '12px',
+                            color: '#fff',
+                            fontWeight: 'bold',
+                            fontSize: '14px',
+                            background: isAchieved ? '#4CAF50' : '#FF9800'
+                        }}>{isAchieved ? '최소수량 달성' : '최소수량 미달'}</span>
+                    </li><br />
                 </ul>
 
 
                 <ul className={styles.buttongroup}>
-                    <li><Link to={`/gongguapply/${findItem._id}`}><button className={styles.b1}>공구<br />참여하기</button></Link></li>
+                    <li><Link to={`/gongguapply/${findItem._id}`}><button className={styles.b1}>구매하기</button></Link></li>
                     <li><button className={styles.b2} onClick={openModal}>총대에게<br />쪽지보내기</button></li>
 
                     <li><div className={styles.heart}>

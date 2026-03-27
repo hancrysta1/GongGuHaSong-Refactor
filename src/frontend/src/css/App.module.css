@@ -20,7 +20,7 @@ body {
     display: grid;
     width: auto;
     height: 100vh;
-    grid-template-columns: 1fr 4fr;
+    grid-template-columns: 1fr 4fr 1.2fr;
   }
   
   /* 새마을체: 제목 */

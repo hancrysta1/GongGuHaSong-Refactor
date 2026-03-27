@@ -4,15 +4,15 @@
   margin: 20px;
   border-radius: 50px rgba(255, 255, 255, 0.8);
   /* Rectangle 19 */
-  
+
   float: left;
-  
+
   position: relative;
   width: 335px;
   height: 352px;
   left: 50px;
-  top: -120px;
-  
+  top: 0px;
+
   background: rgba(255, 255, 255, 0.8);
   border-radius: 50px;
   transform: matrix(1, 0, 0, 1, 0, 0);

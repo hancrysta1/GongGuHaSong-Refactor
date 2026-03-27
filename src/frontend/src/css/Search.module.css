@@ -1,0 +1,205 @@
+/* 검색바 */
+.searchContainer {
+  position: relative;
+  width: 500px;
+  margin: 0 auto;
+  margin-top: -80px;
+  margin-bottom: 20px;
+  z-index: 10;
+}
+
+.searchForm {
+  display: flex;
+  gap: 8px;
+}
+
+.searchInput {
+  flex: 1;
+  padding: 12px 16px;
+  border: 2px solid #0D2D84;
+  border-radius: 25px;
+  font-size: 16px;
+  font-family: "content";
+  outline: none;
+  transition: border-color 0.3s;
+}
+
+.searchInput:focus {
+  border-color: #2060AA;
+  box-shadow: 0 0 8px rgba(32, 96, 170, 0.3);
+}
+
+.searchButton {
+  padding: 12px 24px;
+  background-color: #0D2D84;
+  color: white;
+  border: none;
+  border-radius: 25px;
+  font-size: 16px;
+  font-family: "content";
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.searchButton:hover {
+  background-color: #2060AA;
+}
+
+.suggestions {
+  position: absolute;
+  top: 50px;
+  left: 0;
+  right: 60px;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.suggestionItem {
+  padding: 12px 16px;
+  cursor: pointer;
+  font-family: "content";
+  font-size: 14px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.suggestionItem:hover {
+  background-color: #f8f8f8;
+}
+
+.suggestionItem:last-child {
+  border-bottom: none;
+}
+
+/* 실시간 랭킹 */
+.rankingContainer {
+  background: white;
+  border-radius: 15px;
+  padding: 20px;
+  margin: 20px auto;
+  width: 280px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+  position: sticky;
+  top: 20px;
+}
+
+.rankingHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #0D2D84;
+}
+
+.rankingTitle {
+  font-family: "content";
+  font-size: 18px;
+  font-weight: bold;
+  color: #0D2D84;
+}
+
+.liveIndicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: bold;
+  color: #e74c3c;
+}
+
+.liveDotActive {
+  width: 8px;
+  height: 8px;
+  background-color: #e74c3c;
+  border-radius: 50%;
+  animation: pulse 1.5s infinite;
+}
+
+.liveDot {
+  width: 8px;
+  height: 8px;
+  background-color: #95a5a6;
+  border-radius: 50%;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.3; }
+  100% { opacity: 1; }
+}
+
+.rankingList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.rankingItem {
+  display: flex;
+  align-items: center;
+  padding: 8px 5px;
+  border-bottom: 1px solid #f5f5f5;
+  font-family: "content";
+}
+
+.rankingItem:last-child {
+  border-bottom: none;
+}
+
+.rankNumber {
+  width: 30px;
+  font-size: 16px;
+  font-weight: bold;
+  color: #0D2D84;
+}
+
+.rankKeyword {
+  flex: 1;
+  font-size: 14px;
+  color: #333;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rankChange {
+  width: 40px;
+  text-align: right;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.rankingEmpty {
+  text-align: center;
+  padding: 20px;
+  color: #aaa;
+  font-family: "content";
+  font-size: 14px;
+}
+
+/* 검색 결과 */
+.searchResults {
+  margin-top: 20px;
+}
+
+.searchResultsTitle {
+  font-family: "content";
+  font-size: 20px;
+  color: #0D2D84;
+  margin-bottom: 15px;
+  padding-left: 10px;
+}
+
+.noResults {
+  text-align: center;
+  padding: 40px;
+  color: #aaa;
+  font-family: "content";
+  font-size: 18px;
+}

@@ -1,0 +1,227 @@
+## Member Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: member-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: member-service
+  template:
+    metadata:
+      labels:
+        app: member-service
+    spec:
+      containers:
+        - name: member-service
+          image: gongguhasong-main-member-service
+          imagePullPolicy: Never
+          env:
+            - name: SPRING_DATA_MONGODB_HOST
+              value: mongodb
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: member-service
+spec:
+  selector:
+    app: member-service
+  ports:
+    - port: 8081
+---
+## Product Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: product-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: product-service
+  template:
+    metadata:
+      labels:
+        app: product-service
+    spec:
+      containers:
+        - name: product-service
+          image: gongguhasong-main-product-service
+          imagePullPolicy: Never
+          env:
+            - name: SPRING_DATA_MONGODB_HOST
+              value: mongodb
+            - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
+              value: "kafka:9092"
+            - name: SPRING_REDIS_HOST
+              value: redis
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: product-service
+spec:
+  selector:
+    app: product-service
+  ports:
+    - port: 8082
+---
+## Order Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: order-service
+  template:
+    metadata:
+      labels:
+        app: order-service
+    spec:
+      containers:
+        - name: order-service
+          image: gongguhasong-main-order-service
+          imagePullPolicy: Never
+          env:
+            - name: SPRING_DATA_MONGODB_HOST
+              value: mongodb
+            - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
+              value: "kafka:9092"
+            - name: PRODUCT_SERVICE_URL
+              value: "http://product-service:8082"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: order-service
+spec:
+  selector:
+    app: order-service
+  ports:
+    - port: 8083
+---
+## Point Service (MySQL) — 스케일 아웃 대상
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: point-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: point-service
+  template:
+    metadata:
+      labels:
+        app: point-service
+    spec:
+      containers:
+        - name: point-service
+          image: gongguhasong-main-point-service
+          imagePullPolicy: Never
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:mysql://mysql:3306/point_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul"
+            - name: SPRING_DATASOURCE_USERNAME
+              value: root
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: root
+            - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
+              value: "kafka:9092"
+            - name: SPRING_REDIS_HOST
+              value: redis
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: point-service
+spec:
+  selector:
+    app: point-service
+  ports:
+    - port: 8084
+---
+## Payment Service (MySQL, SAGA)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: payment-service
+  template:
+    metadata:
+      labels:
+        app: payment-service
+    spec:
+      containers:
+        - name: payment-service
+          image: gongguhasong-main-payment-service
+          imagePullPolicy: Never
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:mysql://mysql:3306/payment_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&createDatabaseIfNotExist=true"
+            - name: SPRING_DATASOURCE_USERNAME
+              value: root
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: root
+            - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
+              value: "kafka:9092"
+            - name: POINT_SERVICE_URL
+              value: "http://point-service:8084"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: payment-service
+spec:
+  selector:
+    app: payment-service
+  ports:
+    - port: 8085
+---
+## Search Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: search-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: search-service
+  template:
+    metadata:
+      labels:
+        app: search-service
+    spec:
+      containers:
+        - name: search-service
+          image: gongguhasong-main-search-service
+          imagePullPolicy: Never
+          env:
+            - name: SPRING_DATA_MONGODB_HOST
+              value: mongodb
+            - name: SPRING_ELASTICSEARCH_URIS
+              value: "http://elasticsearch:9200"
+            - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
+              value: "kafka:9092"
+            - name: SPRING_REDIS_HOST
+              value: redis
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: search-service
+spec:
+  selector:
+    app: search-service
+  ports:
+    - port: 8086

@@ -83,7 +83,7 @@ const Newgonggu = () => {
           }).then((res) => {
 
             if (res.status === 200) {
-                alert('새로운 공구가 추가되었습니다!')
+                alert('새로운 상품이 등록되었습니다!')
               history(`/`);
             } else if (res === null){ 
                 alert('중복된 제목입니다.')
@@ -114,7 +114,7 @@ const Newgonggu = () => {
                         <h2><img src={nsicon} alt="icon" style={{ width: "50px", height: "40px" }} />기본 정보</h2>
 
                         <ul>
-                            <li><label htmlFor="공구 제목">공구 제목</label><input type="text" name="title" placeholder="20자 이내로 입력하세요" onChange={onChange}/></li>
+                            <li><label htmlFor="공구 제목">상품명</label><input type="text" name="title" placeholder="20자 이내로 입력하세요" onChange={onChange}/></li>
                             <li><label htmlFor="예상 가격">예상 가격</label><input className={styles.inputcss} type="number" name="price" onChange={onChange}/>&nbsp;원</li>
                             <li><label htmlFor="최소 수량">최소 수량</label><input className={styles.inputcss} type="number" name="min_count" onChange={onChange}/>&nbsp;개</li>
                             <li><label htmlFor="재고">재고</label><input className={styles.inputcss} type="number" name="stock" onChange={onChange}/>&nbsp;개</li>
@@ -143,16 +143,16 @@ const Newgonggu = () => {
                         </ul>
                         <h2><img src={nsicon} alt="icon" style={{ width: "50px", height: "40px" }} /> 프로젝트 소개</h2>
                         <ul>
-                            <li><textarea className={styles.textareacss} name="info" placeholder="공구할 물품에 대한 정보를 기재하세요" rows="20" cols="80" onChange={onChange}></textarea></li>
+                            <li><textarea className={styles.textareacss} name="info" placeholder="상품에 대한 정보를 기재하세요" rows="20" cols="80" onChange={onChange}></textarea></li>
                         </ul>
                         <h2><img src={nsicon} alt="icon" style={{ width: "50px", height: "40px" }} />진행 기간</h2>
                         <ul>
                             <li>수량조사 기간&emsp;<input  className={styles.inputcss} type="date" name="startResearch" onChange={onChange}/>&nbsp;~<input type="date" name="finishResearch" onChange={onChange}/></li>
-                            <li>공구진행 기간&emsp;<input  className={styles.inputcss} type="date" name="startDate" onChange={onChange}/>&nbsp;~<input type="date" name="finishDate" onChange={onChange}/></li>
+                            <li>판매 기간&emsp;<input  className={styles.inputcss} type="date" name="startDate" onChange={onChange}/>&nbsp;~<input type="date" name="finishDate" onChange={onChange}/></li>
                         </ul>
                         <h2><img src={nsicon} alt="icon" style={{ width: "50px", height: "40px" }} /> 유의사항</h2>
                         <ul>
-                            <li><textarea className={styles.textareacss} name="notice" placeholder="환불 정보 등 공구시 유의사항을 기재하세요" rows="25" cols="80" onChange={onChange}></textarea></li>
+                            <li><textarea className={styles.textareacss} name="notice" placeholder="환불 정보 등 구매 시 유의사항을 기재하세요" rows="25" cols="80" onChange={onChange}></textarea></li>
                         </ul>
                         <ul>
                             <li><label htmlFor="계좌명">계좌이름</label><input type="text" name="accountName" placeholder="입금 받을 계좌의 이름" onChange={onChange}/></li>

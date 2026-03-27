@@ -1,0 +1,193 @@
+version: '3.8'
+
+services:
+  # MongoDB (인증 활성화 + 서비스별 계정 분리)
+  mongodb:
+    image: mongo:5.0
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin-secret-2026
+    volumes:
+      - mongodb_data:/data/db
+      - ./mongo-init.js:/docker-entrypoint-initdb.d/init.js
+    networks:
+      - gonggu-network
+
+  # Elasticsearch (한국어 nori 플러그인 포함)
+  elasticsearch:
+    build:
+      context: .
+      dockerfile_inline: |
+        FROM docker.elastic.co/elasticsearch/elasticsearch:7.17.10
+        RUN elasticsearch-plugin install analysis-nori
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+      - xpack.security.enabled=false
+    ports:
+      - "9200:9200"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    networks:
+      - gonggu-network
+
+  # MySQL (point-service, payment-service용)
+  mysql:
+    image: mysql:8.0
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./mysql-init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - gonggu-network
+
+  # Redis
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - gonggu-network
+
+  # Zookeeper (Kafka 의존)
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.0
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - gonggu-network
+
+  # Kafka
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    depends_on:
+      - zookeeper
+    expose:
+      - "9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    networks:
+      - gonggu-network
+
+  # Member Service
+  member-service:
+    build: ./member-service
+    ports:
+      - "8081:8081"
+    depends_on:
+      - mongodb
+    environment:
+      - SPRING_DATA_MONGODB_HOST=mongodb
+    networks:
+      - gonggu-network
+
+  # Product Service
+  product-service:
+    build: ./product-service
+    ports:
+      - "8082:8082"
+    depends_on:
+      - mongodb
+      - kafka
+      - redis
+    environment:
+      - SPRING_DATA_MONGODB_HOST=mongodb
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - SPRING_REDIS_HOST=redis
+    networks:
+      - gonggu-network
+
+  # Order Service
+  order-service:
+    build: ./order-service
+    ports:
+      - "8083:8083"
+    depends_on:
+      - mongodb
+      - kafka
+    environment:
+      - SPRING_DATA_MONGODB_HOST=mongodb
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - SPRING_REDIS_HOST=redis
+      - PRODUCT_SERVICE_URL=http://product-service:8082
+    networks:
+      - gonggu-network
+
+  # Point Service (MySQL)
+  point-service:
+    build: ./point-service
+    ports:
+      - "8084:8084"
+    depends_on:
+      - mysql
+      - kafka
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/point_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - SPRING_REDIS_HOST=redis
+    networks:
+      - gonggu-network
+
+  # Payment Service (MySQL)
+  payment-service:
+    build: ./payment-service
+    ports:
+      - "8085:8085"
+    depends_on:
+      - mysql
+      - kafka
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/payment_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&createDatabaseIfNotExist=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - POINT_SERVICE_URL=http://point-service:8084
+      - PRODUCT_SERVICE_URL=http://product-service:8082
+    networks:
+      - gonggu-network
+
+  # Search Service
+  search-service:
+    build: ./search-service
+    ports:
+      - "8086:8086"
+    depends_on:
+      - mongodb
+      - elasticsearch
+      - kafka
+    environment:
+      - SPRING_DATA_MONGODB_HOST=mongodb
+      - SPRING_ELASTICSEARCH_URIS=http://elasticsearch:9200
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - SPRING_REDIS_HOST=redis
+    networks:
+      - gonggu-network
+
+  # Frontend (React)
+  frontend:
+    build: ./src/frontend
+    ports:
+      - "3002:80"
+    networks:
+      - gonggu-network
+
+volumes:
+  mongodb_data:
+  mysql_data:
+  es_data:
+
+networks:
+  gonggu-network:
+    driver: bridge

@@ -62,14 +62,17 @@ const Productcomponent = ({ main }) => {
   //신청 수량 계산
   const [applyquantity, getApplyquantity] = useState(0);
   const calculateRate = async () => {
-    await axios.get('/sell',
-      { params: { title: main.title } }).then((res) => {
-
-        getApplyquantity(res.data);
-      }
-
-      )
+    try {
+      const res = await axios.get('/sell', { params: { title: main.title } });
+      const data = Array.isArray(res.data) ? res.data.length : (typeof res.data === 'number' ? res.data : 0);
+      getApplyquantity(data);
+    } catch(e) {
+      getApplyquantity(0);
+    }
   }
+
+  const percent = Math.min(Math.ceil(applyquantity / main.min_count * 100), 100);
+  const isAchieved = applyquantity >= main.min_count;
 
 
 
@@ -91,13 +94,55 @@ const Productcomponent = ({ main }) => {
         <div className={styles.datebox}>D{Dday}</div>
         <div className={styles.productcontent}>
           <p className={styles.producttitle}>{main.title}</p>
-          <p className={styles.progress}>공구 진행률: {Math.ceil(applyquantity / main.min_count * 100)}%</p>
+          <p className={styles.progress} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            달성률 {percent}%
+            <span style={{
+              fontSize: '12px',
+              padding: '2px 8px',
+              borderRadius: '10px',
+              color: '#fff',
+              fontWeight: 'bold',
+              background: isAchieved ? '#4CAF50' : '#FF9800'
+            }}>{isAchieved ? '달성' : '미달'}</span>
+          </p>
         </div>
       </Link>
       <div className={styles.heart}>
         <img onClick={clickLike} src={heart ? like : nonelike} alt="찜" style={{ width: "40px", height: "40px" }} />
 
       </div>
+      <button
+        style={{
+          position: 'absolute',
+          left: '230px',
+          top: '289px',
+          background: 'none',
+          border: 'none',
+          fontSize: '28px',
+          cursor: 'pointer',
+          padding: 0
+        }}
+        title="장바구니 담기"
+        onClick={(e) => {
+          e.preventDefault();
+          const cart = JSON.parse(sessionStorage.getItem('cart') || '[]');
+          const existingIndex = cart.findIndex(item => item.title === main.title);
+          if (existingIndex >= 0) {
+            cart[existingIndex].quantity += 1;
+          } else {
+            cart.push({
+              title: main.title,
+              price: main.price,
+              quantity: 1,
+              mainPhoto: main.mainPhoto
+            });
+          }
+          sessionStorage.setItem('cart', JSON.stringify(cart));
+          alert('장바구니에 담았습니다');
+        }}
+      >
+        🛒
+      </button>
 
 
 

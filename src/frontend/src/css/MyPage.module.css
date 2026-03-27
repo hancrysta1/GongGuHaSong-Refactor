@@ -1,0 +1,253 @@
+/* 마이페이지 전체 컨테이너 */
+.mypage {
+    position: relative;
+    top: -80px;
+    font-family: "content";
+}
+
+.mypageTab {
+    width: 1000px;
+}
+
+.mypageTitle {
+    background: #2060AA;
+    border-radius: 10px;
+    position: relative;
+    width: 244px;
+    height: 55px;
+    left: 130px;
+    top: -100px;
+    font-family: 'IM_Hyemin';
+    font-style: normal;
+    font-weight: 700;
+    font-size: 24px;
+    line-height: 29px;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #FFF4E8;
+}
+
+.line {
+    position: relative;
+    width: 946px;
+    height: 0px;
+    left: 130px;
+    top: -105px;
+    background: #0D2D84;
+    border: 3px solid #0D2D84;
+}
+
+/* 섹션 공통 */
+.section {
+    position: relative;
+    left: 130px;
+    width: 946px;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 20px;
+    padding: 25px 30px;
+    margin-bottom: 20px;
+    box-sizing: border-box;
+}
+
+.section:first-of-type {
+    top: -70px;
+}
+
+.sectionTitle {
+    font-size: 24px;
+    font-weight: 700;
+    color: #0D2D84;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #BFDAE7;
+}
+
+/* 사용자 정보 */
+.userInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.infoRow {
+    display: flex;
+    align-items: center;
+    font-size: 20px;
+    gap: 15px;
+}
+
+.infoLabel {
+    font-weight: 700;
+    color: #707070;
+    min-width: 100px;
+}
+
+.infoValue {
+    color: #000000;
+    font-weight: 400;
+}
+
+/* 포인트 */
+.pointBalance {
+    font-size: 32px;
+    font-weight: 700;
+    color: #F48B29;
+    text-align: center;
+    padding: 20px 0;
+}
+
+.pointUnit {
+    font-size: 20px;
+    color: #707070;
+    margin-left: 5px;
+}
+
+/* 카드 목록 */
+.cardList {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.cardItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #FFF4E8;
+    border-radius: 10px;
+    padding: 15px 20px;
+    border: 1px solid #BFDAE7;
+}
+
+.cardNumber {
+    font-size: 20px;
+    font-weight: 700;
+    color: #0D2D84;
+    letter-spacing: 2px;
+}
+
+.cardDetails {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+}
+
+.cardCompany {
+    font-size: 16px;
+    color: #707070;
+}
+
+.cardLimit {
+    font-size: 14px;
+    color: #F48B29;
+}
+
+/* 카드 등록 폼 */
+.addCardBtn {
+    float: right;
+    background: #F48B29;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 6px 16px;
+    font-size: 14px;
+    cursor: pointer;
+    font-family: 'content';
+}
+
+.cardForm {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 15px;
+    padding: 15px;
+    background: #f9f9f9;
+    border-radius: 10px;
+}
+
+.cardForm input, .cardForm select {
+    padding: 10px;
+    border: 1px solid #BFDAE7;
+    border-radius: 8px;
+    font-size: 16px;
+    font-family: 'content';
+}
+
+.submitBtn {
+    background: #0D2D84;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px;
+    font-size: 16px;
+    cursor: pointer;
+    font-family: 'content';
+}
+
+.deleteBtn {
+    background: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 5px 12px;
+    font-size: 13px;
+    cursor: pointer;
+    margin-left: 10px;
+}
+
+.noData {
+    font-size: 18px;
+    color: #707070;
+    text-align: center;
+    padding: 20px 0;
+}
+
+/* 주문 내역 */
+.orderList {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.orderItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #FFF4E8;
+    border-radius: 10px;
+    padding: 15px 20px;
+    border: 1px solid #BFDAE7;
+}
+
+.orderTitle {
+    font-size: 20px;
+    font-weight: 700;
+    color: #000000;
+}
+
+.orderDetails {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+}
+
+.orderQuantity {
+    font-size: 16px;
+    color: #707070;
+}
+
+.orderDate {
+    font-size: 14px;
+    color: #707070;
+}
+
+.loading {
+    font-size: 18px;
+    color: #707070;
+    text-align: center;
+    padding: 20px 0;
+}

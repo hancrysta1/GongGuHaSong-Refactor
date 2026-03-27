@@ -51,7 +51,7 @@ const Productlead = ({ findItem }) => {
 
                     <li>남은 기간</li><br />
                     <li>가격</li><br />
-                    <li>공구 진행률</li><br />
+                    <li>구매 달성률</li><br />
                     <li>남은 최소수량</li><br />
                 </ul>
                 <ul className={styles.productbox2}>

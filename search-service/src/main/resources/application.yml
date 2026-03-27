@@ -1,0 +1,30 @@
+server:
+  port: 8086
+
+spring:
+  application:
+    name: search-service
+  data:
+    mongodb:
+      host: localhost
+      port: 27017
+      database: search-db
+      username: search_user
+      password: search-secret-2026
+      authentication-database: search-db
+  redis:
+    host: localhost
+    port: 6379
+  elasticsearch:
+    uris: http://localhost:9200
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: search-service-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+        spring.json.value.default.type: GongGuHaSong.search.event.OrderEvent
+        spring.json.use.type.headers: false

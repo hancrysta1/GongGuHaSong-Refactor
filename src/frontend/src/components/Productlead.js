@@ -53,7 +53,7 @@ const Productlead = ({ findItem }) => {
 
                     <li>남은 기간</li><br />
                     <li>가격</li><br />
-                    <li>공구 진행률</li><br />
+                    <li>구매 달성률</li><br />
                     <li>남은 최소수량</li><br />
                     <li>재고</li><br />
                 </ul>
@@ -67,7 +67,7 @@ const Productlead = ({ findItem }) => {
 
 
                 <ul className={styles.buttongroup}>
-                    <li><button className={styles.b1}>수정하기</button></li>
+                    <li><Link to={`/editgonggu/${findItem._id}`}><button className={styles.b1}>수정하기</button></Link></li>
                     <li><Link to={`/check/${findItem._id}`}><button className={styles.b2}>신청자정보<br/>확인하기</button></Link></li>
 
                 </ul>

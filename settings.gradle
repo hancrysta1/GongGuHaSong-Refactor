@@ -1,1 +1,8 @@
 rootProject.name = 'GongGuHaSong'
+
+include 'member-service'
+include 'product-service'
+include 'order-service'
+include 'point-service'
+include 'payment-service'
+include 'search-service'

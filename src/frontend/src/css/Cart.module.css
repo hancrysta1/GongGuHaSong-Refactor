@@ -1,0 +1,250 @@
+/* 장바구니 전체 컨테이너 */
+.cart {
+    position: relative;
+    top: -80px;
+    font-family: "content";
+}
+
+.cartTab {
+    width: 1000px;
+}
+
+.cartTitle {
+    background: #2060AA;
+    border-radius: 10px;
+    position: relative;
+    width: 244px;
+    height: 55px;
+    left: 130px;
+    top: -100px;
+    font-family: 'IM_Hyemin';
+    font-style: normal;
+    font-weight: 700;
+    font-size: 24px;
+    line-height: 29px;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #FFF4E8;
+}
+
+.line {
+    position: relative;
+    width: 946px;
+    height: 0px;
+    left: 130px;
+    top: -105px;
+    background: #0D2D84;
+    border: 3px solid #0D2D84;
+}
+
+.cartEmpty {
+    position: relative;
+    left: 130px;
+    top: -60px;
+    font-size: 24px;
+    color: #707070;
+    text-align: center;
+    width: 946px;
+    padding: 80px 0;
+}
+
+/* 장바구니 아이템 목록 */
+.cartList {
+    position: relative;
+    left: 130px;
+    top: -70px;
+    width: 946px;
+}
+
+.cartItem {
+    display: flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 15px;
+    gap: 20px;
+}
+
+.cartItemImage {
+    width: 120px;
+    height: 120px;
+    border-radius: 15px;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.cartItemInfo {
+    flex: 1;
+}
+
+.cartItemTitle {
+    font-size: 22px;
+    font-weight: 700;
+    color: #000000;
+    margin-bottom: 8px;
+}
+
+.cartItemPrice {
+    font-size: 18px;
+    color: #707070;
+    margin-bottom: 12px;
+}
+
+/* 수량 조절 */
+.quantityControl {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.quantityBtn {
+    width: 36px;
+    height: 36px;
+    border: 2px solid #0D2D84;
+    border-radius: 8px;
+    background: #FFF4E8;
+    color: #0D2D84;
+    font-size: 20px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "content";
+}
+
+.quantityBtn:hover {
+    background: #0D2D84;
+    color: #FFF4E8;
+}
+
+.quantityValue {
+    font-size: 20px;
+    font-weight: 700;
+    min-width: 30px;
+    text-align: center;
+}
+
+/* 소계 및 삭제 */
+.cartItemRight {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 15px;
+    min-width: 150px;
+}
+
+.subtotal {
+    font-size: 22px;
+    font-weight: 700;
+    color: #0D2D84;
+}
+
+.removeBtn {
+    width: 100px;
+    height: 40px;
+    background: #BFDAE7;
+    border: 0px;
+    border-radius: 5px;
+    font-family: 'IM_Hyemin';
+    font-weight: 700;
+    font-size: 16px;
+    color: #707070;
+    cursor: pointer;
+}
+
+.removeBtn:hover {
+    background: #F48B29;
+    color: #FFF4E8;
+}
+
+/* 합계 영역 */
+.cartSummary {
+    position: relative;
+    left: 130px;
+    top: -60px;
+    width: 946px;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 20px;
+    padding: 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-sizing: border-box;
+}
+
+.totalLabel {
+    font-size: 26px;
+    font-weight: 700;
+    color: #000000;
+}
+
+.totalPrice {
+    font-size: 28px;
+    font-weight: 700;
+    color: #0D2D84;
+}
+
+.checkoutBtn {
+    width: 220px;
+    height: 60px;
+    background-color: #F48B29;
+    border: 0px;
+    border-radius: 10px;
+    font-family: 'IM_Hyemin';
+    font-style: normal;
+    font-weight: 700;
+    font-size: 24px;
+    line-height: 29px;
+    color: #FFF4E8;
+    cursor: pointer;
+    margin-left: 20px;
+}
+
+.checkoutBtn:hover {
+    background-color: #d97a22;
+}
+
+/* 장바구니 담기 버튼 (Gongguapply 에서 사용) */
+.addToCartBtn {
+    width: 161px;
+    height: 71px;
+    background-color: #F48B29;
+    border-radius: 5px;
+    border: 0px;
+    font-family: 'IM_Hyemin';
+    font-style: normal;
+    font-weight: 700;
+    font-size: 24px;
+    line-height: 29px;
+    color: #FFF4E8;
+    position: relative;
+    left: -40px;
+    top: 50px;
+    cursor: pointer;
+}
+
+.addToCartBtn:hover {
+    background-color: #d97a22;
+}
+
+/* Productcomponent 장바구니 아이콘 */
+.cartIcon {
+    position: absolute;
+    left: 230px;
+    top: 289px;
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 28px;
+}
+
+.cartIcon:hover {
+    transform: scale(1.2);
+}
