@@ -20,7 +20,7 @@
 - Elasticsearch + Nori 한국어 검색 엔진 + 실시간 랭킹 구축.
 - MongoDB → MySQL 리팩토링 (금전 도메인 ACID 보장).
 - k6 부하 테스트 (Chaos Engineering, 동시 300명 22,000건).
-- Eureka/API Gateway 제거 (Docker Compose DNS로 대체).
+- Eureka/API Gateway 제거 (Docker Compose 서비스명 호출로 대체).
 
 ### 팀이 한 것 (원본)
 

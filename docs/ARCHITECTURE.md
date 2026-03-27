@@ -11,7 +11,7 @@
 | 영역 | 기술 |
 |------|------|
 | Backend | Spring Boot 2.7.2, Spring Cloud 2021.0.8, Java 11 |
-| Service Discovery | Docker Compose DNS + FeignClient url 직접 지정 (Eureka 제거) |
+| Service Discovery | Docker Compose 서비스명 호출 + FeignClient url 직접 지정 (Eureka 제거) |
 | API Gateway | 제거 (Spring Cloud Gateway 제거, Nginx로 프론트엔드 라우팅) |
 | Database | MongoDB 5.0 |
 | 검색 엔진 | Elasticsearch 7.17.10 (Nori 한국어 분석기) |
@@ -180,7 +180,7 @@ Elasticsearch (9200)     - 검색 엔진 (nori 플러그인)
 Zookeeper (2181)         - Kafka 코디네이터
 Kafka (9092)             - 이벤트 메시지 브로커
 
-Docker Compose DNS       - 서비스 디스커버리 (서비스명으로 호출)
+Docker Compose 서비스명   - 서비스 디스커버리 (서비스명으로 호출)
 6 Microservices          - 비즈니스 로직
 ```
 

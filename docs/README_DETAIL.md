@@ -405,7 +405,7 @@ MongoDB 트랜잭션으로도 해결할 수 있었다. 하지만.
 | 동시성 제어 | 마이너스 잔액 0건, 이중 차감 0건, 차감=이력 100% 일치 |
 | DB 리팩토링 | point/payment-service MongoDB → MySQL 전환 (Polyglot Persistence) |
 | 정상 상황 성공률 | 99.71% (장애 없이 동시 300명) |
-| 인프라 정리 | Eureka + API Gateway 제거 (Docker Compose DNS로 대체) |
+| 인프라 정리 | Eureka + API Gateway 제거 (Docker Compose 서비스명 호출로 대체) |
 
 ### MySQL 전환 후 ACID 검증
 

@@ -77,10 +77,10 @@ Q. K8s를 도입했다가 뺐다는데?
 > 대용량 트래픽 대응을 위해 K8s를 도입했다. 컨테이너를 늘리고 자동 라우팅만 되면 트래픽을 감당할 수 있을 거라고 생각했다. 실제로 단일 노드에서 Pod 스케일 아웃, 트래픽 분배까지 확인했다. 하지만 K8s의 핵심 가치인 self-healing, HPA, 롤링 업데이트는 멀티노드 프로덕션 환경에서 의미 있는 기능이고, 단일 노드에서는 Docker Compose와 실질적 차이가 없었다. 피상적으로 도입하기보다 확실한 필요가 있을 때 쓰는 게 맞다고 판단해서 제거했다.
 
 Q. (꼬리) 그 과정에서 배운 건?
-> 세 가지가 있다. 첫째, Eureka + API Gateway가 Docker Compose DNS로도 대체 가능하다는 걸 파악하고 제거했다. FeignClient에 `url` 파라미터를 직접 지정하는 방식으로 전환했고, 이건 K8s 제거 후에도 유지된다. 둘째, 같은 RestTemplate 코드가 인프라(Eureka vs K8s)에 따라 다르게 동작한다는 걸 체감했다. Eureka는 요청 단위 분배, kube-proxy는 TCP 연결 단위 분배라서 HTTP Keep-Alive가 변수로 작용했다. 셋째, 기술을 도입할 때 "남들이 쓰니까"가 아니라 "현재 환경에서 이게 해결하는 문제가 있는가"를 먼저 따져야 한다는 것.
+> 세 가지가 있다. 첫째, Eureka + API Gateway가 Docker Compose 서비스명 호출로도 대체 가능하다는 걸 파악하고 제거했다. FeignClient에 `url` 파라미터를 직접 지정하는 방식으로 전환했고, 이건 K8s 제거 후에도 유지된다. 둘째, 같은 RestTemplate 코드가 인프라(Eureka vs K8s)에 따라 다르게 동작한다는 걸 체감했다. Eureka는 요청 단위 분배, kube-proxy는 TCP 연결 단위 분배라서 HTTP Keep-Alive가 변수로 작용했다. 셋째, 기술을 도입할 때 "남들이 쓰니까"가 아니라 "현재 환경에서 이게 해결하는 문제가 있는가"를 먼저 따져야 한다는 것.
 
 Q. Eureka를 왜 제거했나?
-> Docker Compose 환경에서 Eureka의 3가지 기능(서비스 디스커버리, 로드밸런싱, 헬스체크)이 Docker Compose DNS와 중복이었다. Eureka를 유지하면 서비스마다 JVM에 ~30MB Eureka Client + 별도 Eureka Server(~512MB)가 필요한데, Docker Compose에서는 서비스명으로 바로 호출할 수 있어서 불필요했다.
+> Docker Compose 환경에서 Eureka의 3가지 기능(서비스 디스커버리, 로드밸런싱, 헬스체크)이 Docker Compose 서비스명 호출과 중복이었다. Eureka를 유지하면 서비스마다 JVM에 ~30MB Eureka Client + 별도 Eureka Server(~512MB)가 필요한데, Docker Compose에서는 서비스명으로 바로 호출할 수 있어서 불필요했다.
 
 ---
 
