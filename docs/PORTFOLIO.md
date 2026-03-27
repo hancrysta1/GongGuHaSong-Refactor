@@ -1,7 +1,7 @@
 # 공구하송 — 공동구매 플랫폼 리팩토링
 
 > 교내 공구 커뮤니티 사이트를 쇼핑몰형 공동구매 플랫폼으로 리팩토링한 프로젝트.
-> 모놀리식 → MSA → Kubernetes 전환, 결제 시스템 신규 구축, 실시간 검색 도입.
+> 모놀리식 → MSA 전환, 결제 시스템 신규 구축, 실시간 검색 도입.
 
 ---
 
@@ -15,12 +15,12 @@
 
 ### 내가 한 것 (리팩토링)
 
-- 모놀리식 → MSA 6개 서비스 분리 + Kubernetes 전환.
+- 모놀리식 → MSA 6개 서비스 분리.
 - 결제 시스템 신규 구축 (포인트/카드, SAGA 보상 트랜잭션, 동시성 제어).
 - Elasticsearch + Nori 한국어 검색 엔진 + 실시간 랭킹 구축.
 - MongoDB → MySQL 리팩토링 (금전 도메인 ACID 보장).
 - k6 부하 테스트 (Chaos Engineering, 동시 300명 22,000건).
-- Docker Compose → Kubernetes 전환, Eureka/API Gateway 제거.
+- Eureka/API Gateway 제거 (Docker Compose DNS로 대체).
 
 ### 팀이 한 것 (원본)
 
@@ -41,9 +41,9 @@
 | 구매 | 참여 요청만 (결제 없음, 갯수 직접 입력) | 포인트/카드 실시간 결제, +/- 수량 조절 |
 | 재고 | 없음 | 자동 차감, 최소수량 달성률 표시 |
 | 검색 | 없음 | ES + Nori 한국어 검색, 실시간 랭킹 (신규) |
-| 아키텍처 | 모놀리식 Spring Boot | MSA 6개 서비스 + Kubernetes |
+| 아키텍처 | 모놀리식 Spring Boot | MSA 6개 서비스 + Docker Compose |
 | DB | MongoDB 1개 | MongoDB + MySQL + ES (Polyglot) |
-| 트래픽 | 고려 없음 | 부하 테스트 22,000건, 3대 스케일 아웃 |
+| 트래픽 | 고려 없음 | k6 부하 테스트 22,000건, 동시 300명 |
 
 ---
 
@@ -58,9 +58,9 @@
 
 ```
                               ┌──────────────────────────────────────────────┐
-                              │              Kubernetes Cluster              │
+                              │           Docker Compose 환경                │
                               │                                              │
-Browser ──REST──→ K8s Service → │  Member   Product   Order   Payment  Point  │
+Browser ──REST──→ Nginx ──────→ │  Member   Product   Order   Payment  Point  │
 (React)                       │  :8081    :8082    :8083   :8085    :8084   │
                               │  MongoDB  MongoDB  MongoDB  MySQL    MySQL  │
                               │           +Redis     │              +Redis  │
@@ -202,7 +202,7 @@ MSA에서는 서비스 간 DB가 물리적으로 분리되어 있어 외래키(F
 | Backend | Spring Boot 2.7, Java 11, OpenFeign |
 | Database | MongoDB, MySQL, Elasticsearch (Nori), Redis |
 | Message | Apache Kafka, WebSocket (STOMP) |
-| Infra | Kubernetes (Service, kube-proxy), Docker |
+| Infra | Docker Compose |
 | Test | k6 (Chaos Engineering 부하 테스트) |
 | Frontend | React 18 |
 
@@ -214,10 +214,9 @@ MSA에서는 서비스 간 DB가 물리적으로 분리되어 있어 외래키(F
 |------|------|
 | SAGA 보상 트랜잭션 | 포인트 유실률 10.35% → 0.08% (99.2% 개선) |
 | 동시성 제어 | 마이너스 잔액 0건, 차감=이력 100% 일치 |
-| K8s 스케일 아웃 | 3대 Pod 분배 확인, 잔액 정확 (8,000P) |
 | 부하 테스트 | 동시 300명, 22,000건 결제, 성공률 99.71% |
 | DB 리팩토링 | 금전 도메인 MongoDB → MySQL (ACID 전부 검증) |
-| 인프라 전환 | Eureka 제거 → K8s Service DNS + kube-proxy |
+| 인프라 정리 | Eureka + API Gateway 제거 (Docker Compose DNS로 대체) |
 
 ---
 
@@ -227,8 +226,8 @@ MSA에서는 서비스 간 DB가 물리적으로 분리되어 있어 외래키(F
 |------|------|
 | [PAYMENT_TROUBLESHOOTING.md](PAYMENT_TROUBLESHOOTING.md) | 결제 시스템 트러블슈팅 (SAGA + 동시성 제어) |
 | [REALTIME_SEARCH.md](REALTIME_SEARCH.md) | ES + Nori + WebSocket 실시간 검색 구축 |
-| [MULTI_INSTANCE.md](MULTI_INSTANCE.md) | K8s 스케일 아웃 + Eureka 제거 + 기업 사례 |
+| [MULTI_INSTANCE.md](MULTI_INSTANCE.md) | K8s 도입과 제거 — 깨달음 |
 | [DATABASE_SEPARATION.md](DATABASE_SEPARATION.md) | DB 분리 + Polyglot Persistence |
 | [PAYMENT_SECURITY.md](PAYMENT_SECURITY.md) | 결제 보안 설계 (카드 마스킹, 금액 서버 재계산, 한도 검증, DB 접근 권한 분리) |
 | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | Docker 트러블슈팅 |
-| [TROUBLESHOOTING3.md](TROUBLESHOOTING3.md) | K8s 전환 트러블슈팅 |
+| [TROUBLESHOOTING3.md](TROUBLESHOOTING3.md) | K8s 전환 과정 트러블슈팅 (도입 시 겪은 이슈 기록) |

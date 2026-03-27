@@ -1,4 +1,6 @@
-# Troubleshooting 3 — Kubernetes 전환 및 스케일 아웃
+# Troubleshooting 3 — Kubernetes 전환 과정 기록
+
+> **참고**: K8s는 단일 노드 환경에서 핵심 가치가 성립하지 않아 최종적으로 제거했다. 도입과 제거의 판단 과정은 [MULTI_INSTANCE.md](MULTI_INSTANCE.md)에 정리했다. 이 문서는 K8s 전환 과정에서 겪은 트러블슈팅을 기록으로 남긴 것이다.
 
 Docker Compose → Kubernetes 전환 과정에서 발생한 이슈와 해결 과정을 기록한다.
 

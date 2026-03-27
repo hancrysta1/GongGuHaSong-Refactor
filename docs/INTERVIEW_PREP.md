@@ -32,8 +32,8 @@ Q. (꼬리) 그러면 Orchestration SAGA는 동기인가?
 Q. 왜 300명, 22,000건인가?
 > 인기 공구 오픈 시 동시 접속자를 가정했다. 50명 → 100명 → 200명 → 300명으로 단계적으로 올리면서 어느 시점에 문제가 생기는지 확인했다. 22,000건은 300명이 각각 여러 번 결제하면서 누적된 총 건수이다. 1,000명까지도 시도했지만 로컬 Docker 환경에서 서비스가 OOM으로 죽어서, 안정적으로 측정 가능한 300명을 기준으로 잡았다.
 
-Q. (꼬리) K8s 도입하면 더 올릴 수 있지 않나?
-> Docker Compose에서는 서비스가 OOM으로 죽으면 끝이었는데, K8s에서는 Pod이 죽어도 자동 재시작(self-healing)되니까 테스트가 더 안정적이다. 맥북 메모리가 충분하면 노드 1대에서 Pod을 늘려서 1,000명도 가능하다. HPA(자동 확장)도 로컬에서 metrics-server만 설치하면 동작한다. 현재는 수동 `kubectl scale`만 적용한 상태이고, HPA 적용은 추가 개선 사항으로 남겨뒀다. 맥북 물리 메모리 자체가 부족해지면 그때 클라우드에서 노드를 추가하면 된다.
+Q. (꼬리) 더 올리려면 어떻게 해야 하나?
+> 로컬 Docker 환경의 물리적 한계(CPU, 메모리)가 병목이다. 실제로 1,000명까지 시도했지만 서비스가 OOM으로 죽었다. 더 올리려면 클라우드 멀티노드 환경이 필요하고, 그때 K8s를 다시 도입하면 HPA(자동 확장)와 self-healing이 의미 있어진다.
 
 Q. Choreography가 아니라 Orchestration을 쓴 이유?
 > 세 가지 이유이다.
@@ -71,16 +71,16 @@ Q. MongoDB 트랜잭션 쓰면 안 되나?
 
 ---
 
-## Kubernetes
+## Kubernetes 도입과 제거
 
-Q. Docker Compose로도 되는데 왜 K8s?
-> 인스턴스를 늘리는 것만 보면 Docker Compose로 충분하다. K8s를 쓴 이유는 스케일링이 아니라, 서비스가 죽었을 때 자동 복구, 트래픽 폭주 시 자동 확장, 배포 시 무중단 교체이다. 이건 Docker Compose로는 안 된다.
+Q. K8s를 도입했다가 뺐다는데?
+> 대용량 트래픽 대응을 위해 K8s를 도입했다. 컨테이너를 늘리고 자동 라우팅만 되면 트래픽을 감당할 수 있을 거라고 생각했다. 실제로 단일 노드에서 Pod 스케일 아웃, 트래픽 분배까지 확인했다. 하지만 K8s의 핵심 가치인 self-healing, HPA, 롤링 업데이트는 멀티노드 프로덕션 환경에서 의미 있는 기능이고, 단일 노드에서는 Docker Compose와 실질적 차이가 없었다. 피상적으로 도입하기보다 확실한 필요가 있을 때 쓰는 게 맞다고 판단해서 제거했다.
+
+Q. (꼬리) 그 과정에서 배운 건?
+> 세 가지가 있다. 첫째, Eureka + API Gateway가 Docker Compose DNS로도 대체 가능하다는 걸 파악하고 제거했다. FeignClient에 `url` 파라미터를 직접 지정하는 방식으로 전환했고, 이건 K8s 제거 후에도 유지된다. 둘째, 같은 RestTemplate 코드가 인프라(Eureka vs K8s)에 따라 다르게 동작한다는 걸 체감했다. Eureka는 요청 단위 분배, kube-proxy는 TCP 연결 단위 분배라서 HTTP Keep-Alive가 변수로 작용했다. 셋째, 기술을 도입할 때 "남들이 쓰니까"가 아니라 "현재 환경에서 이게 해결하는 문제가 있는가"를 먼저 따져야 한다는 것.
 
 Q. Eureka를 왜 제거했나?
-> K8s에서 Eureka의 기능(서비스 디스커버리, 로드밸런싱, 헬스체크)이 전부 K8s Service + kube-proxy와 중복이었다. Eureka를 유지하면 서비스마다 JVM에 ~30MB Eureka Client + 별도 Eureka Server(~512MB)가 필요한데, K8s는 커널 레벨(iptables)에서 해주니까 앱에 아무것도 안 올려도 된다.
-
-Q. K8s에서 분배가 안 됐다는데?
-> kube-proxy는 새 TCP 연결에서만 Pod을 선택하는데, Java RestTemplate이 HTTP Keep-Alive로 연결을 재사용해서 한 Pod에 고착됐다. Docker Compose에서는 Eureka Ribbon이 앱 안에서 매 요청마다 인스턴스를 선택해줘서 이 문제가 없었다. K8s는 커널 레벨(iptables)로 분배 주체가 바뀌면서 TCP 연결 재사용이라는 변수가 개입한 것이다. `Connection: close` 헤더를 추가해서 매 요청마다 새 TCP 연결을 만들어 해결했다.
+> Docker Compose 환경에서 Eureka의 3가지 기능(서비스 디스커버리, 로드밸런싱, 헬스체크)이 Docker Compose DNS와 중복이었다. Eureka를 유지하면 서비스마다 JVM에 ~30MB Eureka Client + 별도 Eureka Server(~512MB)가 필요한데, Docker Compose에서는 서비스명으로 바로 호출할 수 있어서 불필요했다.
 
 ---
 

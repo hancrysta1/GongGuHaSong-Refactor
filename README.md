@@ -1,8 +1,8 @@
 # 공구하송 — MSA 공동구매 플랫폼
 
-> 6개 서비스 · 3종 DB · Kafka 이벤트 기반 설계
+> 개인사업자 중심으로 파편화된 공동구매를 하나의 플랫폼에서 실시간으로 참여할 수 있는 서비스
 >
-> 결제 보안(HMAC 위변조 검증, 카드 마스킹, DB 접근권한 분리) · SAGA 보상 트랜잭션 · 실시간 검색 랭킹(ES + WebSocket)까지 전체 시스템을 처음부터 설계한 프로젝트
+> 6개 서비스 · 3종 DB · Kafka 이벤트 기반 · SAGA 보상 트랜잭션 · k6 부하 테스트 정량 검증
 
 
 
@@ -20,7 +20,7 @@
 
 ```
                               ┌──────────────────────────────────────────────┐
-                              │              Kubernetes Cluster              │
+                              │           Docker Compose 환경                │
                               │                                              │
 Browser (React) ──REST────────→ │  Member   Product   Order   Payment  Point  │
                               │  :8081    :8082    :8083   :8085    :8084   │
@@ -32,22 +32,71 @@ Browser (React) ──REST────────→ │  Member   Product   Or
                               │  ─ Kafka ─  ─ Redis ─  ─ Zookeeper ─       │
                               │  ─ MongoDB ─  ─ MySQL ─  ─ ES ─            │
                               └──────────────────────────────────────────────┘
-
-[결제 흐름]
-Browser → Order ──Feign(동기)──→ Product (재고 차감)
-                    │            ↑ 재고 부족 시 즉시 거절해야 하므로 동기
-               Kafka(비동기)
-                    │            ↑ 1건 주문 → 3개 서비스 팬아웃, 결과를 기다릴 필요 없음
-              ┌─────┼──────┐
-              ▼     ▼      ▼
-          Payment Point  Search (랭킹 갱신 → WebSocket → Browser)
-              │
-       RestTemplate(동기)
-              ▼            ↑ 잔액 부족이면 결제 자체를 중단해야 하므로 동기
-            Point (포인트 차감: SELECT FOR UPDATE)
-              │
-         실패 시 SAGA 보상 (포인트 복구)
 ```
+
+### 주문·결제 흐름
+
+주문과 결제는 **별도의 요청**으로 분리되어 있다.
+
+```
+[1단계: 주문 생성]
+
+Browser ──POST /order──→ Order ──Feign(동기)──→ Product (재고 확인 + 차감)
+                           │                    ↑ 재고 부족 시 즉시 거절해야 하므로 동기
+                           │
+                      Kafka 'order-events' (비동기 팬아웃)
+                           │    ↑ 주문 확정 후 후속 처리. 결제와 무관한 작업들.
+                     ┌─────┼──────────┐
+                     ▼     ▼          ▼
+                 Payment  Point     Search
+                 (재고    (포인트    (랭킹 갱신
+                  예약)    적립)     → WebSocket)
+```
+
+```
+[2단계: 결제 — SAGA Orchestration]
+
+Browser ──POST /payment──→ Payment (SAGA 오케스트레이터)
+                              │
+                  ┌───────────┼───────────┐
+                  ▼           ▼           ▼
+             STEP 1      STEP 2      STEP 3
+             HMAC        결제 수단     결제 기록
+             위변조 검증   처리        MySQL 저장
+                          │
+                    ┌──────┴──────┐
+                    ▼             ▼
+              포인트 차감      카드 결제
+              RestTemplate     (승인번호
+              (동기)            발급)
+                 ▼
+               Point
+               SELECT FOR UPDATE
+               (잔액 부족 시 즉시 중단)
+```
+
+```
+[결제 실패 시 — SAGA 역순 보상]
+
+STEP 2~3 실패 감지
+    │
+    ├──→ ① 카드 환불     ──실패 시──→ CompensationOutbox 저장
+    ├──→ ② 포인트 복구   ──실패 시──→ CompensationOutbox 저장
+    └──→ ③ 재고 복구     ──실패 시──→ CompensationOutbox 저장
+                                          │
+                                    30초 폴링 스케줄러
+                                    (최대 5회 재시도,
+                                     초과 시 FAILED 마킹)
+```
+
+#### 동기/비동기 선택 근거
+
+| 구간 | 방식 | 이유 |
+|------|------|------|
+| Order → Product (재고 차감) | Feign 동기 | 재고 부족 시 주문 자체를 거절해야 함 |
+| Order → Kafka 팬아웃 | 비동기 | 재고예약·포인트적립·랭킹갱신은 주문 응답에 불필요 |
+| Payment → Point (포인트 차감) | RestTemplate 동기 | 잔액 부족이면 결제를 중단해야 함 |
+| 보상 실패 → Outbox | 비동기 폴링 | 보상 대상 서비스가 일시 장애여도 최종 복구 보장 |
 
 <br>
 
@@ -77,10 +126,10 @@ Browser → Order ──Feign(동기)──→ Product (재고 차감)
 | | Before | After |
 |---|---|---|
 | 구조 | 모놀리식 Spring Boot 1개 | MSA 6개 서비스 분리 |
-| 배포 | 없음 | Docker Compose / Kubernetes |
-| 서비스 디스커버리 | — | K8s Service DNS + kube-proxy |
+| 배포 | 없음 | Docker Compose |
+| 서비스 디스커버리 | — | Docker Compose DNS + FeignClient url 직접 지정 |
 | 서비스 간 통신 | — | Feign(동기) + Kafka(비동기) + RestTemplate |
-| 결제 트랜잭션 | — | SAGA Orchestration (보상 트랜잭션) |
+| 결제 트랜잭션 | — | SAGA Orchestration + CompensationOutbox |
 | 동시성 제어 | — | MySQL `SELECT FOR UPDATE` |
 | DB | MongoDB 1개 | MongoDB + MySQL + ES (Polyglot) |
 | 부하 테스트 | 없음 | k6 동시 1000명 동시성 검증 + 장애 주입 SAGA 보상 검증 (별도 테스트) |
@@ -93,7 +142,7 @@ Browser → Order ──Feign(동기)──→ Product (재고 차감)
 |---|---|---|
 | Backend | ![Spring Boot](https://img.shields.io/badge/Spring_Boot-2.7-6DB33F?logo=springboot&logoColor=white) ![Java](https://img.shields.io/badge/Java-11-007396?logo=openjdk&logoColor=white) | ![Spring Boot](https://img.shields.io/badge/Spring_Boot-2.7-6DB33F?logo=springboot&logoColor=white) ![Java](https://img.shields.io/badge/Java-11-007396?logo=openjdk&logoColor=white) ![OpenFeign](https://img.shields.io/badge/OpenFeign-HTTP_Client-6DB33F?logo=spring&logoColor=white) |
 | Database | ![MongoDB](https://img.shields.io/badge/MongoDB-5.0-47A248?logo=mongodb&logoColor=white) | ![MongoDB](https://img.shields.io/badge/MongoDB-5.0-47A248?logo=mongodb&logoColor=white) ![MySQL](https://img.shields.io/badge/MySQL-8.0-4479A1?logo=mysql&logoColor=white) ![Elasticsearch](https://img.shields.io/badge/Elasticsearch-7.17_(Nori)-005571?logo=elasticsearch&logoColor=white) ![Redis](https://img.shields.io/badge/Redis-7-DC382D?logo=redis&logoColor=white) |
-| Infra | — | ![Kubernetes](https://img.shields.io/badge/Kubernetes-Orchestration-326CE5?logo=kubernetes&logoColor=white) ![Docker](https://img.shields.io/badge/Docker-Container-2496ED?logo=docker&logoColor=white) ![Kafka](https://img.shields.io/badge/Apache_Kafka-Event_Driven-231F20?logo=apachekafka&logoColor=white) |
+| Infra | — | ![Docker](https://img.shields.io/badge/Docker_Compose-Container-2496ED?logo=docker&logoColor=white) ![Kafka](https://img.shields.io/badge/Apache_Kafka-Event_Driven-231F20?logo=apachekafka&logoColor=white) |
 | Frontend | ![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black) | ![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black) |
 | Test | — | ![k6](https://img.shields.io/badge/k6-Load_Test-7D64FF?logo=k6&logoColor=white) |
 
@@ -140,12 +189,11 @@ Browser → Order ──Feign(동기)──→ Product (재고 차감)
 - 이벤트 드리븐(즉시) + 60초 폴링(폴백) 하이브리드
 - 자동완성/실제검색 API 분리 (랭킹 오염 방지)
 
-### Kubernetes 전환
-> [MULTI_INSTANCE.md](docs/MULTI_INSTANCE.md) / [TROUBLESHOOTING3.md](docs/TROUBLESHOOTING3.md)
+### Kubernetes 도입과 제거 — 깨달음
+> [MULTI_INSTANCE.md](docs/MULTI_INSTANCE.md)
 
-- Docker Compose → K8s 전환, Eureka + API Gateway 제거 (K8s Service DNS + kube-proxy로 대체)
-- HTTP Keep-Alive로 로드밸런싱 안 되는 문제 → 원인 분석 → `Connection: close` 해결
-- K8s Deployment + Service로 수평 확장 구조 구성. 멀티노드 환경 부재로 스케일 아웃 성능 비교는 미검증
+- 대용량 트래픽 대응을 위해 K8s를 도입했으나, 단일 노드 환경에서는 K8s의 핵심 가치(self-healing, HPA, 롤링 업데이트)가 성립하지 않음을 인지
+- 피상적 도입보다 확실한 필요에 의한 선택이라는 판단으로 제거. 과정에서 Eureka 제거, 인프라에 따른 코드 동작 차이 등을 학습
 
 ### DB 분리 & Polyglot Persistence
 > [DATABASE_SEPARATION.md](docs/DATABASE_SEPARATION.md)
@@ -156,7 +204,7 @@ Browser → Order ──Feign(동기)──→ Product (재고 차감)
 ### 결제 보안 설계
 > [PAYMENT_SECURITY.md](docs/PAYMENT_SECURITY.md)
 
-### Docker 배포 트러블슈팅
+### Docker Compose 배포 트러블슈팅
 > [TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) / [TROUBLESHOOTING2.md](docs/TROUBLESHOOTING2.md)
 
 - 6개 서비스 + 인프라 통합 배포 과정의 이슈 해결 (Nginx DNS, WebSocket 프록시, ES 기동 순서, Kafka 세션 충돌 등)
@@ -182,6 +230,5 @@ GongGuHaSong/
 ├── payment-service/        # 결제 — SAGA Orchestrator (MySQL)
 ├── point-service/          # 포인트 — SELECT FOR UPDATE (MySQL)
 ├── search-service/         # 검색 + 실시간 랭킹 (ES + MongoDB)
-├── src/frontend/           # React
-└── k8s/                    # Kubernetes 매니페스트
+└── src/frontend/           # React
 ```

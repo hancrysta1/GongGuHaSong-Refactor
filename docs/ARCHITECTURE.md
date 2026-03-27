@@ -11,8 +11,8 @@
 | 영역 | 기술 |
 |------|------|
 | Backend | Spring Boot 2.7.2, Spring Cloud 2021.0.8, Java 11 |
-| Service Discovery | K8s Service DNS (Eureka 제거) |
-| API Gateway | K8s Ingress 또는 K8s Service (Spring Cloud Gateway 제거) |
+| Service Discovery | Docker Compose DNS + FeignClient url 직접 지정 (Eureka 제거) |
+| API Gateway | 제거 (Spring Cloud Gateway 제거, Nginx로 프론트엔드 라우팅) |
 | Database | MongoDB 5.0 |
 | 검색 엔진 | Elasticsearch 7.17.10 (Nori 한국어 분석기) |
 | 메시지 브로커 | Apache Kafka (Confluent 7.4.0) |
@@ -31,8 +31,8 @@
                           └────────┬────────┘
                                    │
                           ┌────────▼────────┐
-                          │  K8s Service    │
-                          │   (port 8080)   │
+                          │  Nginx Proxy    │
+                          │   (port 3002)   │
                           └────────┬────────┘
                                    │
               ┌────────────────────┼────────────────────┐
@@ -180,7 +180,7 @@ Elasticsearch (9200)     - 검색 엔진 (nori 플러그인)
 Zookeeper (2181)         - Kafka 코디네이터
 Kafka (9092)             - 이벤트 메시지 브로커
 
-K8s Service DNS          - 서비스 디스커버리 + 로드밸런싱
+Docker Compose DNS       - 서비스 디스커버리 (서비스명으로 호출)
 6 Microservices          - 비즈니스 로직
 ```
 
@@ -199,6 +199,6 @@ K8s Service DNS          - 서비스 디스커버리 + 로드밸런싱
 ### 향후 개선
 - [ ] Kafka Dead Letter Queue(DLQ) — SAGA 보상 실패 건 재처리
 - [ ] Circuit Breaker (Resilience4j) — REST 호출(결제↔포인트)에 서킷 브레이커 적용
-- [ ] Outbox Pattern — 보상 트랜잭션 내역을 로컬 DB에 저장 → 스케줄러 재시도
-- [ ] Kubernetes 배포 — Docker Compose → K8s 오케스트레이션 전환
+- [x] CompensationOutbox — 보상 트랜잭션 실패 건을 로컬 DB에 저장 → 30초 폴링 스케줄러 재시도 (최대 5회)
+- [x] ~~Kubernetes 전환~~ — 도입 후 제거. 단일 노드 환경에서 K8s의 핵심 가치가 성립하지 않아 Docker Compose 유지 ([깨달음](MULTI_INSTANCE.md))
 - [ ] 분산 추적 (Zipkin/Jaeger) — 서비스 간 요청 추적 및 병목 분석
