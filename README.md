@@ -1,44 +1,82 @@
 # 공구하송 — MSA 공동구매 플랫폼
 
-> 개인사업자 중심으로 파편화된 공동구매를 하나의 플랫폼에서 실시간으로 참여할 수 있는 서비스
->
+> 개인사업자 중심으로 파편화된 공동구매를 하나의 플랫폼에서 실시간으로 참여할 수 있는 서비스<br>
 > 6개 서비스 · 3종 DB · Kafka 이벤트 기반 · SAGA 보상 트랜잭션 · k6 부하 테스트 정량 검증
+<br>
 
-
+<br>
 
 ## 프로젝트 개요
 
-| 항목 | 내용                                                 |
-|------|----------------------------------------------------|
-| 원본 개발 | 2022.03 ~ 2022.06 (4명 中 백엔드)                       |
-| 리팩토링 | 2025.10 ~ 2026.03 (1인, 아키텍처/결제/검색/인프라 전체)          |
-| 수상 | 숙명여대 SOLUX 27기 상반기 우수상                             |
+| 항목 | 내용                                                |
+|------|---------------------------------------------------|
+| 원본 개발 | 2022.03 ~ 2022.06 (4명 中 백엔드)                      |
+| 원본 깃허브 | https://github.com/GongGuHaSong/GongGuHaSong                      |
+| 리팩토링 | 2025.10 ~ 2026.03 (1인, 아키텍처/결제/검색/인프라 전체)         |
+| 수상 | 숙명여대 SOLUX 27기 상반기 우수상                            |
 | 리팩토링 방식 | 아키텍처 설계, 기술 선택, 결과 검증은 직접 수행.<br/>코드 작성은 AI 도구 활용. |
 
+<br>
 
 ## 서비스 아키텍처
+<img width="2940" height="1077" alt="image" src="https://github.com/user-attachments/assets/ea1d12cc-0405-4c2d-9dc8-3ac79c09542d" />
 
-| 서비스 | DB | 역할 |
-|--------|-----|------|
-| Member :8081 | MongoDB | 회원 관리 |
-| Product :8082 | MongoDB + Redis | 상품, 재고, 주문 수량 캐시 |
-| Order :8083 | MongoDB + Kafka | 주문 생성 → Kafka 이벤트 발행 |
-| Payment :8085 | MySQL | **SAGA 오케스트레이터** — 결제 + 역순 보상 |
-| Point :8084 | MySQL + Redis | 포인트 차감/적립 (`SELECT FOR UPDATE`) |
-| Search :8086 | ES + Nori + MongoDB | 한국어 검색 + 실시간 랭킹 (WebSocket) |
+<br>
 
+## 실행 방법
+
+```bash
+docker compose up -d
+# → http://localhost:3002
+```
+
+<br>
+
+## 프로젝트 구조
+
+```
+GongGuHaSong/
+├── member-service/         # 회원 관리 (MongoDB)
+├── product-service/        # 상품 관리 (MongoDB + Redis)
+├── order-service/          # 주문 처리 (MongoDB + Kafka)
+├── payment-service/        # 결제 — SAGA Orchestrator (MySQL)
+├── point-service/          # 포인트 — SELECT FOR UPDATE (MySQL + Redis)
+├── search-service/         # 검색 + 실시간 랭킹 (ES + MongoDB)
+└── src/frontend/           # React
+```
+
+<br>
+
+## 주문·결제 흐름
 ### 주문 → Kafka 팬아웃
 
 > 1건 주문이 4개 서비스에 동시 전달되는 이벤트 드리븐 구조
+>
+<br>
+<img width="2580" height="1074" alt="image" src="https://github.com/user-attachments/assets/8aa5f892-ddee-4bd9-80d7-f7c6d0595c8a" />
+<br>
 
 | 단계 | 흐름 | 방식 | 이유 |
 |------|------|------|------|
 | 재고 차감 | Order → Product | Feign 동기 | 재고 부족 시 즉시 거절 |
-| 후속 처리 | Order → Kafka → Payment, Point, Search, Product | 비동기 팬아웃 | 재고예약·적립·랭킹·캐시는 주문 응답에 불필요 |
+| 후속 처리 | Order → Kafka → Payment, Point, Search, Product | 비동기 팬아웃 | 재고예약·적립·랭킹·캐시 = 도메인 다름 |
+
+
+<br>
+<br>
 
 ### 결제 — SAGA Orchestration
+<img width="521" height="495" alt="image" src="https://github.com/user-attachments/assets/6f35b9d6-4463-4d34-94f9-5ab2825d73ce" />
+<br>
 
 > Payment가 오케스트레이터로서 STEP 1~3을 순서대로 실행. 실패 시 역순 보상.
+
+<br>
+
+<img width="659" height="463" alt="image" src="https://github.com/user-attachments/assets/aabfa116-3f28-4446-9022-df06869ebdbc" />
+
+<br>
+
 
 | | 성공 흐름 | 실패 시 보상 |
 |---|---|---|
@@ -48,7 +86,12 @@
 | 주문 적립 | Kafka로 수량 × 100P 자동 적립 | ① 적립 포인트 회수 |
 | 보상 실패 시 | — | CompensationOutbox 저장 → 30초 폴링 재시도 (최대 5회) |
 
-### 실시간 검색 랭킹
+
+
+<br>
+<br>
+
+## 실시간 검색 랭킹
 
 > ES + Nori 한국어 형태소 분석 · 이벤트 드리븐 즉시 갱신 + 60초 폴링 폴백
 
@@ -60,18 +103,21 @@
 | 자동완성 | `/suggest` — ES 조회만, 로그 미저장 (랭킹 오염 방지) |
 
 <br>
+<br>
 
-## What is different?
+# What is different?
 
-### 원본
-- 깃허브 링크 : 
+## 원본
+- 깃허브 링크 : https://github.com/GongGuHaSong/GongGuHaSong
 - 공구 참여 요청, 쪽지, 찜, 회원가입 기능 개발
 - MongoDB 설계, React 프론트엔드
 
+<br>
+<br>
 
-### 리팩토링
+## 리팩토링
 
-**기능**
+### 기능
 
 | | Before (2022, 팀) | After (리팩토링, 1인) |
 |---|---|---|
@@ -83,7 +129,24 @@
 <br>
 <br>
 
-**기술 스택**
+### 아키텍처
+
+| | Before | After | 왜 |
+|---|---|---|---|
+| 구조 | 모놀리식 Spring Boot 1개 | MSA 6개 서비스 분리 | 서비스별 독립 배포 + DB 기술 선택 자유 (Polyglot) |
+| 배포 | 없음 | Docker Compose | 6개 서비스 + 인프라 통합 구동 |
+| 서비스 간 통신 | — | Feign(동기) + Kafka(비동기) + RestTemplate | 재고·잔액 검증은 동기, 적립·랭킹 등 후속 처리는 비동기 |
+| 결제 트랜잭션 | — | SAGA Orchestration + CompensationOutbox | MSA에서 `@Transactional`이 안 통하므로 역순 보상 + 실패 시 Outbox 재시도 |
+| 동시성 제어 | — | MySQL `SELECT FOR UPDATE` | MongoDB `findAndModify`로는 차감+이력 원자성 불가 → MySQL 전환 |
+| DB | MongoDB 1개 | MongoDB + MySQL + ES (Polyglot) | 금전 도메인은 ACID 필수 → MySQL, 검색은 역인덱스 필요 → ES |
+| 캐시 | 없음 | Redis + Kafka 이벤트로 캐시 동기화 | 주문 발생 시 Kafka → Product 서비스가 주문 수량 캐시 갱신 |
+| 부하 테스트 | 없음 | k6 동시 300명 22,000건 + 장애 주입 SAGA 검증 | 정합성을 수치로 증명 (유실률 10.35% → 0.08%) |
+
+
+<br>
+<br>
+
+### 기술 스택
 
 | 영역 | Before | After |
 |---|---|---|
@@ -94,8 +157,9 @@
 | Test | — | ![k6](https://img.shields.io/badge/k6-Load_Test-7D64FF?logo=k6&logoColor=white) |
 
 <br>
+<br>
 
-## 주요 성과
+### 주요 성과
 
 | 항목 | Before | After |
 |------|--------|-------|
@@ -104,8 +168,15 @@
 | 포인트 차감-이력 불일치 | 발생 (MongoDB 별도 연산) | 0건 (MySQL @Transactional) |
 
 <br>
+<br>
 
 ## 시연
+- 실시간 검색어 (키워드) <br>
+![Image](https://github.com/user-attachments/assets/69684d57-30f6-46e9-82e0-77e06751ee69)
+
+- 주문 & 결제
+<img width="1209" height="752" alt="image" src="https://github.com/user-attachments/assets/4b06a5b7-2c85-4425-b468-178a3f0fb1fa" />
+
 
 <!-- 아래 항목들을 GIF 또는 스크린샷으로 추가 -->
 
@@ -119,7 +190,7 @@
 > 시연 영상/GIF 준비 후 교체 예정
 
 <br>
-
+<br>
 
 ## 기술적 의사결정 & 트러블슈팅
 
@@ -132,7 +203,10 @@
 ### 실시간 검색어 랭킹
 > [REALTIME_SEARCH.md](docs/REALTIME_SEARCH.md)
 
-- 상세 설계 및 트러블슈팅 (띄어쓰기 검색 에러, 랭킹 오염, 폴링→이벤트 드리븐 전환)
+- Elasticsearch + Nori 한국어 형태소 분석, 역인덱스 기반 검색
+- 이벤트 드리븐(즉시) + 60초 폴링(폴백) 하이브리드
+- 자동완성/실제검색 API 분리 (랭킹 오염 방지)
+- 띄어쓰기 검색 에러, 랭킹 오염, 폴링→이벤트 드리븐 전환 트러블슈팅
 
 ### Kubernetes 도입과 제거 — 깨달음
 > [MULTI_INSTANCE.md](docs/MULTI_INSTANCE.md)
@@ -155,25 +229,3 @@
 - 6개 서비스 + 인프라 통합 배포 과정의 이슈 해결 (Nginx DNS, WebSocket 프록시, ES 기동 순서, Kafka 세션 충돌 등)
 
 <br>
-
-## 실행 방법
-
-```bash
-docker compose up -d
-# → http://localhost:3002
-```
-
-<br>
-
-## 프로젝트 구조
-
-```
-GongGuHaSong/
-├── member-service/         # 회원 관리 (MongoDB)
-├── product-service/        # 상품 관리 (MongoDB + Redis)
-├── order-service/          # 주문 처리 (MongoDB + Kafka)
-├── payment-service/        # 결제 — SAGA Orchestrator (MySQL)
-├── point-service/          # 포인트 — SELECT FOR UPDATE (MySQL)
-├── search-service/         # 검색 + 실시간 랭킹 (ES + MongoDB)
-└── src/frontend/           # React
-```
