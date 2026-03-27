@@ -18,9 +18,27 @@ body {
   /* 전체 그리드 생성 */
   .root {
     display: grid;
-    width: auto;
-    height: 100vh;
-    grid-template-columns: 1fr 4fr 1.2fr;
+    width: 100%;
+    min-height: 100vh;
+    grid-template-columns: minmax(220px, 1fr) 4fr minmax(320px, 1.5fr);
+  }
+
+  @media (max-width: 1024px) {
+    .root {
+      grid-template-columns: 180px 1fr;
+    }
+    .root > div:last-child {
+      grid-column: 1 / -1;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .root {
+      grid-template-columns: 1fr;
+    }
+    .menugrid {
+      grid-column: 1 !important;
+    }
   }
   
   /* 새마을체: 제목 */
@@ -47,9 +65,12 @@ body {
   .menugrid {
     grid-column: 1/2;
     width: auto;
+    min-width: 0;
     height: auto;
     background: #BFDAE7;
-    
+    overflow: visible;
+    z-index: 10;
+    position: relative;
   }
     
   .content {

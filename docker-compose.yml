@@ -88,6 +88,12 @@ services:
       - mongodb
     environment:
       - SPRING_DATA_MONGODB_HOST=mongodb
+      - SPRING_DATA_MONGODB_DATABASE=member-db
+      - SPRING_DATA_MONGODB_USERNAME=member_user
+      - SPRING_DATA_MONGODB_PASSWORD=member-secret-2026
+      - SPRING_DATA_MONGODB_AUTHENTICATION_DATABASE=member-db
+      - EUREKA_CLIENT_ENABLED=false
+      - SPRING_CLOUD_DISCOVERY_ENABLED=false
     networks:
       - gonggu-network
 
@@ -102,8 +108,14 @@ services:
       - redis
     environment:
       - SPRING_DATA_MONGODB_HOST=mongodb
+      - SPRING_DATA_MONGODB_DATABASE=product-db
+      - SPRING_DATA_MONGODB_USERNAME=product_user
+      - SPRING_DATA_MONGODB_PASSWORD=product-secret-2026
+      - SPRING_DATA_MONGODB_AUTHENTICATION_DATABASE=product-db
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - SPRING_REDIS_HOST=redis
+      - EUREKA_CLIENT_ENABLED=false
+      - SPRING_CLOUD_DISCOVERY_ENABLED=false
     networks:
       - gonggu-network
 
@@ -117,9 +129,15 @@ services:
       - kafka
     environment:
       - SPRING_DATA_MONGODB_HOST=mongodb
+      - SPRING_DATA_MONGODB_DATABASE=order-db
+      - SPRING_DATA_MONGODB_USERNAME=order_user
+      - SPRING_DATA_MONGODB_PASSWORD=order-secret-2026
+      - SPRING_DATA_MONGODB_AUTHENTICATION_DATABASE=order-db
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - SPRING_REDIS_HOST=redis
       - PRODUCT_SERVICE_URL=http://product-service:8082
+      - EUREKA_CLIENT_ENABLED=false
+      - SPRING_CLOUD_DISCOVERY_ENABLED=false
     networks:
       - gonggu-network
 
@@ -137,6 +155,8 @@ services:
       - SPRING_DATASOURCE_PASSWORD=root
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - SPRING_REDIS_HOST=redis
+      - EUREKA_CLIENT_ENABLED=false
+      - SPRING_CLOUD_DISCOVERY_ENABLED=false
     networks:
       - gonggu-network
 
@@ -155,6 +175,8 @@ services:
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - POINT_SERVICE_URL=http://point-service:8084
       - PRODUCT_SERVICE_URL=http://product-service:8082
+      - EUREKA_CLIENT_ENABLED=false
+      - SPRING_CLOUD_DISCOVERY_ENABLED=false
     networks:
       - gonggu-network
 
@@ -169,9 +191,15 @@ services:
       - kafka
     environment:
       - SPRING_DATA_MONGODB_HOST=mongodb
+      - SPRING_DATA_MONGODB_DATABASE=search-db
+      - SPRING_DATA_MONGODB_USERNAME=search_user
+      - SPRING_DATA_MONGODB_PASSWORD=search-secret-2026
+      - SPRING_DATA_MONGODB_AUTHENTICATION_DATABASE=search-db
       - SPRING_ELASTICSEARCH_URIS=http://elasticsearch:9200
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - SPRING_REDIS_HOST=redis
+      - EUREKA_CLIENT_ENABLED=false
+      - SPRING_CLOUD_DISCOVERY_ENABLED=false
     networks:
       - gonggu-network
 

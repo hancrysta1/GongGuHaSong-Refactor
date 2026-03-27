@@ -94,13 +94,14 @@
   }
 
   .logout {
-    position: absolute;
-    left: 35px;
-    top: 50px;
+    display: block;
+    margin-left: 40px;
+    margin-top: 30px;
     background-color: transparent;
     border: 0px;
     font-family: "content";
     font-size: 18px;
     color:#707070;
+    cursor: pointer;
   }
  

@@ -12,6 +12,8 @@ function Cart() {
     const [userPoints, setUserPoints] = useState(0);
     const [userCards, setUserCards] = useState([]);
     const [selectedCardId, setSelectedCardId] = useState(null);
+    const [usePointWithCard, setUsePointWithCard] = useState(false);
+    const [pointInput, setPointInput] = useState(0);
 
     useEffect(() => {
         loadCart();
@@ -88,6 +90,11 @@ function Cart() {
         setLoading(true);
 
         try {
+            // 포인트 사용 금액을 상품별로 비례 배분
+            let remainingPoint = (paymentMethod === 'POINT') ? totalPrice
+                : (paymentMethod === 'CARD' && usePointWithCard) ? Math.min(pointInput, userPoints, totalPrice)
+                : 0;
+
             for (const item of cartItems) {
                 // ── STEP 1: 주문 생성 (재고 차감 + Kafka 이벤트 발행) ──
                 const orderRes = await axios.post('/order', {
@@ -99,8 +106,22 @@ function Cart() {
 
                 const orderId = orderRes.data?._id || `cart-${userId}-${Date.now()}`;
 
-                // ── STEP 2: 결제 처리 (포인트/카드) ──
-                const pointUsed = paymentMethod === 'POINT' ? (item.price * item.quantity) : 0;
+                // ── STEP 2: 결제 처리 (포인트/카드/복합) ──
+                const itemTotal = item.price * item.quantity;
+                let pointUsed = 0;
+                let cardId = null;
+                let method = paymentMethod;
+
+                if (paymentMethod === 'POINT') {
+                    pointUsed = itemTotal;
+                } else if (paymentMethod === 'CARD') {
+                    cardId = selectedCardId;
+                    if (usePointWithCard && remainingPoint > 0) {
+                        pointUsed = Math.min(remainingPoint, itemTotal);
+                        remainingPoint -= pointUsed;
+                        method = pointUsed > 0 ? 'CARD_AND_POINT' : 'CARD';
+                    }
+                }
 
                 await axios.post('/payment', {
                     orderId: orderId,
@@ -109,8 +130,8 @@ function Cart() {
                     quantity: item.quantity,
                     unitPrice: item.price,
                     pointUsed: pointUsed,
-                    paymentMethod: paymentMethod,
-                    cardId: paymentMethod === 'CARD' ? selectedCardId : null
+                    paymentMethod: method,
+                    cardId: cardId
                 });
             }
 
@@ -226,7 +247,7 @@ function Cart() {
                                 <label style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px', border: paymentMethod === 'CARD' ? '2px solid #0D2D84' : '1px solid #ddd', borderRadius: '10px', cursor: 'pointer' }}>
                                     <input type="radio" name="pay" value="CARD"
                                         checked={paymentMethod === 'CARD'}
-                                        onChange={() => setPaymentMethod('CARD')} />
+                                        onChange={() => { setPaymentMethod('CARD'); setUsePointWithCard(false); setPointInput(0); }} />
                                     <div style={{ flex: 1 }}>
                                         <div style={{ fontWeight: 'bold' }}>카드 결제</div>
                                         {userCards.length > 0 ? (
@@ -241,6 +262,32 @@ function Cart() {
                                             </select>
                                         ) : (
                                             <div style={{ fontSize: '13px', color: '#E53935', marginTop: '4px' }}>등록된 카드가 없습니다</div>
+                                        )}
+                                        {paymentMethod === 'CARD' && userPoints > 0 && (
+                                            <div style={{ marginTop: '10px', padding: '10px', background: '#f8f9fa', borderRadius: '8px' }} onClick={(e) => e.stopPropagation()}>
+                                                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                                                    <input type="checkbox" checked={usePointWithCard}
+                                                        onChange={(e) => { setUsePointWithCard(e.target.checked); if (!e.target.checked) setPointInput(0); }} />
+                                                    <span style={{ fontSize: '13px' }}>포인트 함께 사용 ({userPoints.toLocaleString()}P 보유)</span>
+                                                </label>
+                                                {usePointWithCard && (
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
+                                                        <input type="number" min="0" max={Math.min(userPoints, totalPrice)}
+                                                            value={pointInput}
+                                                            onChange={(e) => setPointInput(Math.min(Number(e.target.value), userPoints, totalPrice))}
+                                                            style={{ width: '100px', padding: '4px 8px', borderRadius: '5px', border: '1px solid #ccc', fontSize: '13px', fontFamily: 'content' }}
+                                                        />
+                                                        <span style={{ fontSize: '13px' }}>P</span>
+                                                        <button type="button" onClick={() => setPointInput(Math.min(userPoints, totalPrice))}
+                                                            style={{ padding: '3px 8px', fontSize: '11px', border: '1px solid #0D2D84', borderRadius: '5px', background: '#fff', color: '#0D2D84', cursor: 'pointer', fontFamily: 'content' }}>
+                                                            전액
+                                                        </button>
+                                                        <span style={{ fontSize: '12px', color: '#888' }}>
+                                                            카드: {(totalPrice - pointInput).toLocaleString()}원
+                                                        </span>
+                                                    </div>
+                                                )}
+                                            </div>
                                         )}
                                     </div>
                                 </label>
@@ -258,7 +305,11 @@ function Cart() {
                                     flex: 1, padding: '14px', border: '1px solid #ccc', borderRadius: '10px',
                                     background: '#fff', fontSize: '16px', cursor: 'pointer', fontFamily: 'content'
                                 }}>취소</button>
-                                <button onClick={handlePay} disabled={loading || (paymentMethod === 'POINT' && userPoints < totalPrice) || (paymentMethod === 'CARD' && !selectedCardId)} style={{
+                                <button onClick={handlePay} disabled={
+                                    loading ||
+                                    (paymentMethod === 'POINT' && userPoints < totalPrice) ||
+                                    (paymentMethod === 'CARD' && !selectedCardId)
+                                } style={{
                                     flex: 2, padding: '14px', border: 'none', borderRadius: '10px',
                                     background: (loading || (paymentMethod === 'POINT' && userPoints < totalPrice) || (paymentMethod === 'CARD' && !selectedCardId)) ? '#ccc' : '#0D2D84',
                                     color: '#fff', fontSize: '16px', fontWeight: 'bold', cursor: 'pointer', fontFamily: 'content'

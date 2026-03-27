@@ -22,7 +22,15 @@ spring:
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
       properties:
         spring.json.add.type.headers: false
+  cloud:
+    loadbalancer:
+      enabled: false
+    discovery:
+      enabled: false
 
+eureka:
+  client:
+    enabled: false
 
 product-service:
-  url: http://product-service:8082
+  url: ${PRODUCT_SERVICE_URL:http://localhost:8082}

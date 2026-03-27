@@ -67,6 +67,11 @@ public class CompensationService {
                     case "STOCK_RESTORE":
                         productRestClient.restoreStock(outbox.getTargetId(), outbox.getAmount());
                         break;
+                    case "POINT_EARN_REVOKE":
+                        pointRestClient.usePoints(
+                            outbox.getUserId(), outbox.getAmount(),
+                            "OUTBOX 재시도 적립 회수 (orderId=" + outbox.getOrderId() + ")");
+                        break;
                 }
 
                 outbox.setStatus("COMPLETED");

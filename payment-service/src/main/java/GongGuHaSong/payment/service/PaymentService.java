@@ -97,12 +97,6 @@ public class PaymentService {
 
             int finalAmount = totalAmount - pointUsed - cardAmount;
 
-            // [CHAOS] Outbox 테스트용 10% 장애 주입
-            if (pointUsed > 0 && Math.random() < 0.1) {
-                log.error("[CHAOS] 장애 주입: orderId={}", orderId);
-                throw new RuntimeException("[CHAOS] Outbox 테스트 장애 시뮬레이션");
-            }
-
             // ── STEP 3: 결제 기록 저장 ──
             Payment payment = new Payment();
             payment.setOrderId(orderId);
@@ -164,6 +158,17 @@ public class PaymentService {
                     compensationService.saveFailedCompensation(orderId, userId,
                         "STOCK_RESTORE", quantity, productId, ex.getMessage());
                 }
+            }
+
+            // 0. 주문 적립 포인트 회수 (Kafka로 이미 적립된 수량 × 100P)
+            int earnedPoints = quantity * 100;
+            try {
+                pointRestClient.usePoints(userId, earnedPoints, title + " 결제 실패 적립 회수");
+                log.info("[SAGA] 보상: 적립 포인트 {}P 회수", earnedPoints);
+            } catch (Exception ex) {
+                log.warn("[SAGA] 적립 회수 실패 (아직 적립 전일 수 있음): {}", ex.getMessage());
+                compensationService.saveFailedCompensation(orderId, userId,
+                    "POINT_EARN_REVOKE", earnedPoints, null, ex.getMessage());
             }
 
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,

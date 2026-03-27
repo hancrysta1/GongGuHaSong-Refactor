@@ -91,8 +91,10 @@ function Menubar() {
       </p>
       <p className={styles.menu}><Link to="/mypage" style={{ color: "#707070" }}>마이페이지</Link></p>
 
-      {sessionStorage.length !== 0 ?         <button className={styles.logout} onClick={onLogout}>로그아웃</button>
-: null}
+      {sessionStorage.getItem('user_id') ?
+        <button className={styles.logout} onClick={onLogout}>로그아웃</button>
+        : <p className={styles.menu}><Link to="/login" style={{ color: "#707070" }}>로그인</Link></p>
+      }
     </nav>
 
   );
