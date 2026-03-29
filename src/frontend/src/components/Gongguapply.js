@@ -71,7 +71,9 @@ function Gongguapply({ findItem }) {
                             <div style={{ display: 'flex', alignItems: 'center', border: '2px solid #0D2D84', borderRadius: '8px', overflow: 'hidden' }}>
                                 <button type="button" onClick={() => setQuantity(Math.max(1, quantity - 1))}
                                     style={{ width: '40px', height: '40px', border: 'none', background: '#f0f0f0', fontSize: '20px', cursor: 'pointer' }}>−</button>
-                                <span style={{ width: '50px', textAlign: 'center', fontSize: '18px', fontWeight: 'bold', fontFamily: 'content' }}>{quantity}</span>
+                                <input type="number" min="1" max={maxQuantity} value={quantity}
+                                    onChange={(e) => { const v = parseInt(e.target.value); if (!isNaN(v)) setQuantity(Math.max(1, Math.min(maxQuantity, v))); }}
+                                    style={{ width: '50px', textAlign: 'center', fontSize: '18px', fontWeight: 'bold', fontFamily: 'content', border: 'none', outline: 'none', MozAppearance: 'textfield' }} />
                                 <button type="button" onClick={() => setQuantity(Math.min(maxQuantity, quantity + 1))}
                                     style={{ width: '40px', height: '40px', border: 'none', background: '#f0f0f0', fontSize: '20px', cursor: 'pointer' }}>+</button>
                             </div>
