@@ -197,6 +197,8 @@ GongGuHaSong/
 <img width="800" height="766" alt="image" src="https://github.com/user-attachments/assets/a7cec371-2209-4d53-af24-b6b0d5d7c0ab" />
 <br>
 <br>
+<br>
+<br>
 
 - 주문 과정 gif (잔액-재고-실검 흐름 확인, 잔액과 재고는 차감되고 실검은 구매(0.6)*검색(0.4) 비율에 따라 랭킹 실시간 재조정) <br>
 ![Image](https://github.com/user-attachments/assets/c139c97b-2b09-4318-ace9-5bf6c8005669)
@@ -206,7 +208,6 @@ GongGuHaSong/
 
 - 주문 -> 결제 후 금액 상태 (포인트 2000p, 카드 잔여 한도 210,000원) <br>
 => 포인트 -10만p, 카드 -80만 (총 90만) + 포인트 적립 2000p (20개 * 개당 100p 적립)
-<br>
 <img width="800" height="788" alt="image" src="https://github.com/user-attachments/assets/00f13d34-20c3-4261-8c0c-6d4eb3e6ac62" />
 <br><br>
 
