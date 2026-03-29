@@ -60,7 +60,9 @@ public class SellController {
         }
 
         sell.setStock(newStock);
-        return sellRepository.save(sell);
+        Sell saved = sellRepository.save(sell);
+        productCacheService.evictProduct(id);
+        return saved;
     }
 
     @PostMapping("/sell/{id}/stock/restore")
@@ -69,7 +71,9 @@ public class SellController {
             new ResponseStatusException(HttpStatus.NOT_FOUND, "공구를 찾을 수 없습니다."));
 
         sell.setStock(sell.getStock() + amount);
-        return sellRepository.save(sell);
+        Sell saved = sellRepository.save(sell);
+        productCacheService.evictProduct(id);
+        return saved;
     }
 
     @PutMapping("/sell/{id}")

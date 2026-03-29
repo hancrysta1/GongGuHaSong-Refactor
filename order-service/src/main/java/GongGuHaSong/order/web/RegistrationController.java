@@ -35,7 +35,7 @@ public class RegistrationController {
         return registrationRepository.findAll();
     }
 
-    @GetMapping("/sell")
+    @GetMapping("/order/count")
     public int count(@RequestParam String title) {
         List<Registration> registrationList = registrationRepository.findByTitle(title);
         int total = 0;

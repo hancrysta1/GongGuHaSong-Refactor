@@ -25,22 +25,28 @@ const Productlead = ({ findItem }) => {
     
     const [applyquantity, getApplyquantity] = useState(0);
     const calculateRate = async () => {
-      await axios.get('/sell',
-        { params: { title: findItem.title } }).then((res) => {
-                
-          getApplyquantity(res.data);
+        try {
+            const res = await axios.get('/order/count', { params: { title: findItem.title } });
+            getApplyquantity(typeof res.data === 'number' ? res.data : 0);
+        } catch(e) {
+            getApplyquantity(0);
         }
-  
-        )
     }
-  
-  
-  
-  
+
+    const [currentStock, setCurrentStock] = useState(findItem.stock || 0);
+    const fetchStock = async () => {
+        try {
+            const res = await axios.get('/sell/' + findItem._id);
+            setCurrentStock(res.data.stock);
+        } catch(e) {
+            setCurrentStock(findItem.stock || 0);
+        }
+    }
 
     useEffect(() => {
         calculateDday();
         calculateRate();
+        fetchStock();
       }, [])
 
     return (
@@ -62,7 +68,7 @@ const Productlead = ({ findItem }) => {
                     <li>{findItem.price}</li><br />
                     <li>{Math.ceil(applyquantity/findItem.min_count * 100)}%</li><br />
                     <li>{findItem.min_count - applyquantity}개</li><br />
-                    <li>{findItem.stock || 0}개</li><br />
+                    <li>{currentStock}개</li><br />
                 </ul>
 
 

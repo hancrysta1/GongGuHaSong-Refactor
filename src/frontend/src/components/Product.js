@@ -67,11 +67,21 @@ const Product = ({ findItem }) => {
     const [applyquantity, getApplyquantity] = useState(0);
     const calculateRate = async () => {
         try {
-            const res = await axios.get('/sell', { params: { title: findItem.title } });
-            const data = Array.isArray(res.data) ? res.data.length : (typeof res.data === 'number' ? res.data : 0);
-            getApplyquantity(data);
+            const res = await axios.get('/order/count', { params: { title: findItem.title } });
+            getApplyquantity(typeof res.data === 'number' ? res.data : 0);
         } catch(e) {
             getApplyquantity(0);
+        }
+    }
+
+    // 최신 재고 조회
+    const [currentStock, setCurrentStock] = useState(findItem.stock || 0);
+    const fetchStock = async () => {
+        try {
+            const res = await axios.get('/sell/' + findItem._id);
+            setCurrentStock(res.data.stock);
+        } catch(e) {
+            setCurrentStock(findItem.stock || 0);
         }
     }
 
@@ -84,8 +94,9 @@ const Product = ({ findItem }) => {
         calculateDday();
         heartlists();
         calculateRate();
+        fetchStock();
 
-        
+
     }, [])
 
 
@@ -127,7 +138,7 @@ const Product = ({ findItem }) => {
                         </div>
                     </li><br />
                     <li style={{ fontWeight: 'bold', color: '#0D2D84' }}>{findItem.min_count}개</li><br />
-                    <li>{findItem.stock || 0}개</li><br />
+                    <li>{currentStock}개</li><br />
                     <li>
                         <span style={{
                             padding: '4px 14px',
