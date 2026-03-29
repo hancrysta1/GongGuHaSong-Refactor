@@ -27,7 +27,7 @@ function Gongguapply({ findItem }) {
           }).then((res) => {
             if (res.status === 200) {
                 alert("구매가 완료되었습니다!");
-              history(`/product/${findItem._id}`);
+              window.location.href = `/product/${findItem._id}`;
             }
           }).catch((error) => {
             if (error.response) {

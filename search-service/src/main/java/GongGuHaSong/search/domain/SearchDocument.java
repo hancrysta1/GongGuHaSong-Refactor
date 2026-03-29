@@ -32,6 +32,9 @@ public class SearchDocument {
     @Field(type = FieldType.Integer)
     private int stock;
 
+    @Field(type = FieldType.Integer)
+    private int min_count;
+
     @Field(type = FieldType.Date)
     private Date startDate;
 

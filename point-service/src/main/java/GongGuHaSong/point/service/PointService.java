@@ -46,7 +46,7 @@ public class PointService {
 
     @Transactional
     public Point earnPoints(String userId, int amount, String description) {
-        Point point = pointRepository.findByUserId(userId)
+        Point point = pointRepository.findByUserIdForUpdate(userId)
             .orElseGet(() -> {
                 Point newPoint = new Point();
                 newPoint.setUserId(userId);

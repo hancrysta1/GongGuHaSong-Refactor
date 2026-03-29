@@ -63,16 +63,16 @@ const Productcomponent = ({ main }) => {
   const [applyquantity, getApplyquantity] = useState(0);
   const calculateRate = async () => {
     try {
-      const res = await axios.get('/sell', { params: { title: main.title } });
-      const data = Array.isArray(res.data) ? res.data.length : (typeof res.data === 'number' ? res.data : 0);
-      getApplyquantity(data);
+      const res = await axios.get('/order/count', { params: { title: main.title } });
+      getApplyquantity(typeof res.data === 'number' ? res.data : 0);
     } catch(e) {
       getApplyquantity(0);
     }
   }
 
-  const percent = Math.min(Math.ceil(applyquantity / main.min_count * 100), 100);
-  const isAchieved = applyquantity >= main.min_count;
+  const minCount = main.min_count || 1;
+  const percent = Math.min(Math.ceil(applyquantity / minCount * 100), 100);
+  const isAchieved = applyquantity >= minCount;
 
 
 
@@ -88,8 +88,22 @@ const Productcomponent = ({ main }) => {
   return (
     <div className={styles.productbox}>
       <Link to={`/product/${main._id}`} style={{ color: "black" }}>
-        <div className={styles.productimgbox}>
+        <div className={styles.productimgbox} style={{ position: 'relative' }}>
           <img className={styles.productimg} src={main.mainPhoto} alt="상품이미지" />
+          {isAchieved && (
+            <div style={{
+              position: 'absolute',
+              top: '10px',
+              left: '10px',
+              background: 'rgba(80, 80, 80, 0.85)',
+              color: '#fff',
+              padding: '4px 12px',
+              borderRadius: '6px',
+              fontSize: '12px',
+              fontWeight: 'bold',
+              letterSpacing: '1px'
+            }}>공구확정</div>
+          )}
         </div>
         <div className={styles.datebox}>D{Dday}</div>
         <div className={styles.productcontent}>

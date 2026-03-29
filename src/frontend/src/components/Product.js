@@ -115,6 +115,22 @@ const Product = ({ findItem }) => {
         <div className={styles.product}>
 
             <div className={styles.information}>
+                {isAchieved && (
+                    <div style={{
+                        background: 'linear-gradient(135deg, #4CAF50, #2E7D32)',
+                        color: '#fff',
+                        textAlign: 'center',
+                        padding: '12px 0',
+                        borderRadius: '10px',
+                        marginBottom: '12px',
+                        fontSize: '16px',
+                        fontWeight: 'bold',
+                        letterSpacing: '2px',
+                        boxShadow: '0 3px 12px rgba(76,175,80,0.35)'
+                    }}>
+                        공구 확정! 최소수량 달성
+                    </div>
+                )}
                 <div className={styles.producttitle}>{findItem.title}</div>
                 <div className={styles.productmanager}>{findItem.managerId}</div>
                 <ul className={styles.image}><img src={findItem.mainPhoto} alt="옷" style={{ width: "350px", height: "350px" }} /></ul>
@@ -131,23 +147,36 @@ const Product = ({ findItem }) => {
                     <li>{Number(findItem.price).toLocaleString()}원</li><br />
                     <li>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <div style={{ width: '120px', height: '12px', background: '#e0e0e0', borderRadius: '6px', overflow: 'hidden' }}>
-                                <div style={{ width: `${percent}%`, height: '100%', background: isAchieved ? '#4CAF50' : '#FF9800', borderRadius: '6px', transition: 'width 0.5s' }}></div>
+                            <div style={{ width: '120px', height: '14px', background: '#e0e0e0', borderRadius: '7px', overflow: 'hidden', boxShadow: isAchieved ? '0 0 8px rgba(76,175,80,0.5)' : 'none' }}>
+                                <div style={{ width: `${percent}%`, height: '100%', background: isAchieved ? 'linear-gradient(90deg, #4CAF50, #66BB6A)' : '#FF9800', borderRadius: '7px', transition: 'width 0.5s' }}></div>
                             </div>
-                            <span>{percent}%</span>
+                            <span style={{ fontWeight: isAchieved ? 'bold' : 'normal', color: isAchieved ? '#4CAF50' : '#333' }}>{percent}%</span>
                         </div>
                     </li><br />
                     <li style={{ fontWeight: 'bold', color: '#0D2D84' }}>{findItem.min_count}개</li><br />
                     <li>{currentStock}개</li><br />
                     <li>
-                        <span style={{
-                            padding: '4px 14px',
-                            borderRadius: '12px',
-                            color: '#fff',
-                            fontWeight: 'bold',
-                            fontSize: '14px',
-                            background: isAchieved ? '#4CAF50' : '#FF9800'
-                        }}>{isAchieved ? '최소수량 달성' : '최소수량 미달'}</span>
+                        {isAchieved ? (
+                            <span style={{
+                                padding: '6px 18px',
+                                borderRadius: '14px',
+                                color: '#fff',
+                                fontWeight: 'bold',
+                                fontSize: '15px',
+                                background: 'linear-gradient(135deg, #4CAF50, #2E7D32)',
+                                boxShadow: '0 2px 8px rgba(76,175,80,0.4)',
+                                animation: 'pulse 2s infinite'
+                            }}>공구 달성!</span>
+                        ) : (
+                            <span style={{
+                                padding: '4px 14px',
+                                borderRadius: '12px',
+                                color: '#fff',
+                                fontWeight: 'bold',
+                                fontSize: '14px',
+                                background: '#FF9800'
+                            }}>최소수량 미달</span>
+                        )}
                     </li><br />
                 </ul>
 
