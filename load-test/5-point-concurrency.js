@@ -17,7 +17,7 @@ export const options = {
     concurrent: {
       executor: 'constant-vus',
       vus: 300,
-      duration: '1m',
+      duration: '5m',
     },
   },
   thresholds: {
