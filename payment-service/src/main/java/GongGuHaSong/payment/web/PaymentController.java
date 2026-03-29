@@ -1,10 +1,8 @@
 package GongGuHaSong.payment.web;
 
 import GongGuHaSong.payment.domain.Payment;
-import GongGuHaSong.payment.domain.StockReservation;
 import GongGuHaSong.payment.service.PaymentService;
 import GongGuHaSong.payment.web.dto.PaymentCreateDto;
-import GongGuHaSong.payment.web.dto.StockReserveDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -47,24 +45,4 @@ public class PaymentController {
         return paymentService.getPaymentsByTitle(title);
     }
 
-    @PostMapping("/stock/reserve")
-    public StockReservation reserveStock(@RequestBody StockReserveDto dto) {
-        return paymentService.reserveStock(
-            dto.getProductId(), dto.getTitle(), dto.getUserId(), dto.getQuantity());
-    }
-
-    @PostMapping("/stock/confirm/{reservationId}")
-    public void confirmReservation(@PathVariable Long reservationId) {
-        paymentService.confirmReservation(reservationId);
-    }
-
-    @PostMapping("/stock/release/{reservationId}")
-    public void releaseReservation(@PathVariable Long reservationId) {
-        paymentService.releaseReservation(reservationId);
-    }
-
-    @GetMapping("/stock/reserved/{productId}")
-    public int getReservedQuantity(@PathVariable String productId) {
-        return paymentService.getReservedQuantity(productId);
-    }
 }

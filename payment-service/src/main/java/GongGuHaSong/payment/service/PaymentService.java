@@ -1,15 +1,12 @@
 package GongGuHaSong.payment.service;
 
 import GongGuHaSong.payment.domain.Payment;
-import GongGuHaSong.payment.domain.StockReservation;
 import GongGuHaSong.payment.repository.PaymentRepository;
-import GongGuHaSong.payment.repository.StockReservationRepository;
 import GongGuHaSong.payment.client.PointRestClient;
 import GongGuHaSong.payment.client.ProductRestClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -21,7 +18,6 @@ import java.util.*;
 public class PaymentService {
 
     private final PaymentRepository paymentRepository;
-    private final StockReservationRepository stockReservationRepository;
     private final PointRestClient pointRestClient;
     private final ProductRestClient productRestClient;
     private final CardService cardService;
@@ -206,47 +202,6 @@ public class PaymentService {
         return paymentRepository.save(payment);
     }
 
-    public StockReservation reserveStock(String productId, String title, String userId, int quantity) {
-        StockReservation reservation = new StockReservation();
-        reservation.setProductId(productId);
-        reservation.setTitle(title);
-        reservation.setUserId(userId);
-        reservation.setQuantity(quantity);
-        reservation.setStatus("RESERVED");
-        reservation.setCreatedAt(new Date());
-
-        Calendar cal = Calendar.getInstance();
-        cal.add(Calendar.MINUTE, 30);
-        reservation.setExpiresAt(cal.getTime());
-
-        return stockReservationRepository.save(reservation);
-    }
-
-    public void confirmReservation(Long reservationId) {
-        StockReservation reservation = stockReservationRepository.findById(reservationId)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "예약을 찾을 수 없습니다."));
-        reservation.setStatus("CONFIRMED");
-        stockReservationRepository.save(reservation);
-    }
-
-    public void releaseReservation(Long reservationId) {
-        StockReservation reservation = stockReservationRepository.findById(reservationId)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "예약을 찾을 수 없습니다."));
-        reservation.setStatus("RELEASED");
-        stockReservationRepository.save(reservation);
-    }
-
-    @Scheduled(fixedRate = 60000)
-    public void releaseExpiredReservations() {
-        List<StockReservation> expired = stockReservationRepository
-            .findByStatusAndExpiresAtBefore("RESERVED", new Date());
-        for (StockReservation reservation : expired) {
-            reservation.setStatus("RELEASED");
-            stockReservationRepository.save(reservation);
-            log.info("만료된 재고 예약 해제: {}", reservation.getId());
-        }
-    }
-
     public List<Payment> getPaymentsByUser(String userId) {
         return paymentRepository.findByUserId(userId);
     }
@@ -255,9 +210,4 @@ public class PaymentService {
         return paymentRepository.findByTitle(title);
     }
 
-    public int getReservedQuantity(String productId) {
-        List<StockReservation> reservations = stockReservationRepository
-            .findByProductIdAndStatus(productId, "RESERVED");
-        return reservations.stream().mapToInt(StockReservation::getQuantity).sum();
-    }
 }
