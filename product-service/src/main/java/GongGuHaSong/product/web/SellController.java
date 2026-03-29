@@ -6,6 +6,11 @@ import GongGuHaSong.product.repository.SellRepository;
 import GongGuHaSong.product.service.ProductCacheService;
 import GongGuHaSong.product.web.dto.SellSaveDto;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.FindAndModifyOptions;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -19,6 +24,7 @@ public class SellController {
     private final SellRepository sellRepository;
     private final ProductCacheService productCacheService;
     private final ProductEventProducer productEventProducer;
+    private final MongoTemplate mongoTemplate;
 
     @GetMapping("/sell")
     public List<Sell> findByTitle(@RequestParam String title) {
@@ -50,19 +56,25 @@ public class SellController {
 
     @PostMapping("/sell/{id}/stock")
     public Sell decrementStock(@PathVariable String id, @RequestParam int amount) {
-        Sell sell = sellRepository.findById(id).orElseThrow(() ->
-            new ResponseStatusException(HttpStatus.NOT_FOUND, "공구를 찾을 수 없습니다."));
+        // MongoDB findAndModify: 조회 + 재고 체크 + 차감을 원자적으로 처리
+        // stock >= amount 조건에 맞는 문서를 찾아서 한 번에 -amount
+        Query query = Query.query(Criteria.where("_id").is(id).and("stock").gte(amount));
+        Update update = new Update().inc("stock", -amount);
+        Sell result = mongoTemplate.findAndModify(query, update,
+            FindAndModifyOptions.options().returnNew(true), Sell.class);
 
-        int newStock = sell.getStock() - amount;
-        if (newStock < 0) {
+        if (result == null) {
+            // 문서가 없거나 재고 부족
+            Sell sell = sellRepository.findById(id).orElse(null);
+            if (sell == null) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "공구를 찾을 수 없습니다.");
+            }
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                 "재고가 부족합니다. (현재 재고: " + sell.getStock() + "개, 요청 수량: " + amount + "개)");
         }
 
-        sell.setStock(newStock);
-        Sell saved = sellRepository.save(sell);
         productCacheService.evictProduct(id);
-        return saved;
+        return result;
     }
 
     @PostMapping("/sell/{id}/stock/restore")
