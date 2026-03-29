@@ -219,7 +219,7 @@ GongGuHaSong/
 <br>
 <br>
 
-### 부하 테스트(1) 재고 동시성 <br>
+### 부하 테스트(1) 재고 동시성 (mongoDB) <br>
 
 ```
 100개의 재고를 가진 물품을 300명의 유저가 동시 구매하는 시나리오를 가정함.
@@ -273,7 +273,19 @@ GongGuHaSong/
 <br>
 <br>
 
-### Chaos 테스트(2) 결제 보상 로직 <br>
+### 부하 테스트(2) 포인트 동시성 (MySQL) <br>
+
+<img width="822" height="835" alt="image" src="https://github.com/user-attachments/assets/d77c0eb8-2ce9-4f97-9790-c6ee72bf3e68" />
+<br>
+<br>
+=> 결과: 300 VU × 5분, 총 213,185건의 동시 적립/차감 요청 중 마이너스 잔액 0건 (SELECT FOR UPDATE 정합성 검증 완료)
+
+<br>
+<br>
+<br>
+
+
+### Chaos 테스트(3) 결제 보상 로직 <br>
 
 ```
 결제 실패 시, 원자적으로 처리 된 재고/포인트/결제 로직이 제대로 원상 복구되는지 테스트.
