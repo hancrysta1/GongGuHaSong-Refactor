@@ -243,7 +243,7 @@ GongGuHaSong/
 <br>
 <br>
 
-- After (findAndModify로 조회+차감 원자성 보장) <br><br>
+- After (findAndModify로 조회+차감 원자성 보장 + 재고 정합성 보장) <br><br>
 <img width="733" height="758" alt="image" src="https://github.com/user-attachments/assets/e4fe6557-0642-4c58-b052-43db60af76ca" />
 
 <br>
@@ -259,11 +259,15 @@ GongGuHaSong/
 
 <br>
 <br>
-=> 결과: 3000명의 유저의 동시 요청 중 100건만 결제 완료, 재고 0개 남음 (정확도 100%)
+=> 결과: 3,000명의 유저의 동시 요청 중 100건만 결제 완료, 재고 0개 남음 (정확도 100%)
 
 <br>
 <br>
 <br>
+<img width="770" height="512" alt="image" src="https://github.com/user-attachments/assets/68c4db57-84b8-4ce8-8c1d-2cf8b7d903dd" />
+<br>
+<br>
+=> 결과: 10,000명의 유저의 동시 요청 중 100건만 결제 완료, 재고 0개 남음 (정확도 100%)
 
 <br>
 <br>
