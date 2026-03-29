@@ -45,4 +45,9 @@ public class PaymentController {
         return paymentService.getPaymentsByTitle(title);
     }
 
+    @GetMapping("/order/{orderId}")
+    public Payment getPaymentByOrderId(@PathVariable String orderId) {
+        return paymentService.getPaymentByOrderId(orderId);
+    }
+
 }

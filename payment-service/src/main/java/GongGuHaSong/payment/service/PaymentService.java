@@ -37,6 +37,13 @@ public class PaymentService {
                                   int quantity, int unitPrice, int pointUsed,
                                   String paymentMethod, String cardId,
                                   String productId) {
+        // 멱등성: 같은 orderId로 이미 완료된 결제가 있으면 그대로 반환
+        Optional<Payment> existing = paymentRepository.findByOrderIdAndStatus(orderId, "COMPLETED");
+        if (existing.isPresent()) {
+            log.info("[IDEMPOTENT] 이미 처리된 결제 반환: orderId={}", orderId);
+            return existing.get();
+        }
+
         int totalAmount = quantity * unitPrice;
         int cardAmount = 0;
         String approvalNumber = null;
@@ -93,6 +100,14 @@ public class PaymentService {
 
             int finalAmount = totalAmount - pointUsed - cardAmount;
 
+            // ── 장애 주입 (Chaos Engineering) — k6 부하 테스트 시 주석 해제 ──
+            // 포인트 차감 후, DB 저장 전에 10% 확률로 예외 발생
+            // SAGA 보상이 없으면 → 포인트 차감만 되고 결제 실패 → 유실
+            // SAGA 보상이 있으면 → 포인트 복구 → 유실 0
+            // if (Math.random() < 0.1) {
+            //     throw new RuntimeException("장애 주입: 결제 저장 전 서버 오류 (Chaos Engineering)");
+            // }
+
             // ── STEP 3: 결제 기록 저장 ──
             Payment payment = new Payment();
             payment.setOrderId(orderId);
@@ -117,7 +132,7 @@ public class PaymentService {
             return saved;
 
         } catch (Exception e) {
-            // ── SAGA 보상 트랜잭션: 역순으로 롤백 ──
+            // ── SAGA 보상 트랜잭션 + Outbox 재시도 ──
             log.warn("[SAGA] 결제 실패 → 보상 시작: {}", e.getMessage());
 
             // 3. 카드 환불
@@ -156,13 +171,13 @@ public class PaymentService {
                 }
             }
 
-            // 0. 주문 적립 포인트 회수 (Kafka로 이미 적립된 수량 × 100P)
+            // 0. 주문 적립 포인트 회수
             int earnedPoints = quantity * 100;
             try {
                 pointRestClient.usePoints(userId, earnedPoints, title + " 결제 실패 적립 회수");
                 log.info("[SAGA] 보상: 적립 포인트 {}P 회수", earnedPoints);
             } catch (Exception ex) {
-                log.warn("[SAGA] 적립 회수 실패 (아직 적립 전일 수 있음): {}", ex.getMessage());
+                log.warn("[SAGA] 적립 회수 실패 → Outbox 저장");
                 compensationService.saveFailedCompensation(orderId, userId,
                     "POINT_EARN_REVOKE", earnedPoints, null, ex.getMessage());
             }
@@ -208,6 +223,14 @@ public class PaymentService {
 
     public List<Payment> getPaymentsByTitle(String title) {
         return paymentRepository.findByTitle(title);
+    }
+
+    public Payment getPaymentByOrderId(String orderId) {
+        List<Payment> payments = paymentRepository.findByOrderId(orderId);
+        if (payments.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "결제 정보 없음");
+        }
+        return payments.get(0);
     }
 
 }
