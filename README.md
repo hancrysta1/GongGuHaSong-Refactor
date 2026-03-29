@@ -175,37 +175,42 @@ GongGuHaSong/
 
 <br>
 <br>
-- 2) 주문 시 <br> 
-전 <br>
+- 2) 주문 전/후 비교 <br> 
+전 (단순 검색만 진행했을 때) <br>
 <img width="266" height="211" alt="image" src="https://github.com/user-attachments/assets/b9d8cfa2-2bf5-4530-9a6e-cfa105f9c411" />
-<br>
-후 (가중치 0.6) <br>
+<br><br>
+후 (주문까지 진행했을 때, 가중치가 높아 최상위로 랭킹) <br>
 <img width="327" height="259" alt="image" src="https://github.com/user-attachments/assets/4a5169c6-6e74-4f99-ba0f-cfe3f86cf420" />
 <br>
 <br>
 
 
 ### 주문 & 결제 <br>
-- 결제 전 금액 상태 (포인트 10만p, 카드 잔여 한도 1,010,000원) <br>
-<img width="800" height="842" alt="image" src="https://github.com/user-attachments/assets/d37962fa-157a-446b-b659-02641ceaa151" />
 <br>
-- 결제 전 재고 상태 (진행률 38%, 재고 370개)
+
+- 결제 전 금액 상태 (포인트 10만p, 카드 잔여 한도 1,010,000원) <br><br>
+<img width="800" height="842" alt="image" src="https://github.com/user-attachments/assets/d37962fa-157a-446b-b659-02641ceaa151" />
+<br><br>
+
+- 결제 전 재고 상태 (진행률 38%, 재고 370개) <br><br>
 <img width="800" height="766" alt="image" src="https://github.com/user-attachments/assets/a7cec371-2209-4d53-af24-b6b0d5d7c0ab" />
 <br>
 <br>
 
-- 주문 과정 gif (잔액-재고-실검 흐름 확인, 잔액과 재고는 차감되고 실검은 구매(0.6)*검색(0.4) 비율에 따라 랭킹 실시간 재조정)
+- 주문 과정 gif (잔액-재고-실검 흐름 확인, 잔액과 재고는 차감되고 실검은 구매(0.6)*검색(0.4) 비율에 따라 랭킹 실시간 재조정) <br>
 ![Image](https://github.com/user-attachments/assets/c139c97b-2b09-4318-ace9-5bf6c8005669)
 
 <br>
 <br>
 
-- 주문 -> 결제 후 금액 상태 (포인트 2000p, 카드 잔여 한도 210,000원) <br>
+- 주문 -> 결제 후 금액 상태 (포인트 2000p, 카드 잔여 한도 210,000원) <br><br>
 => 포인트 -10만p, 카드 -80만 (총 90만) + 포인트 적립 2000p (20개 * 개당 100p 적립)
+<br>
+<br>
 <img width="800" height="788" alt="image" src="https://github.com/user-attachments/assets/00f13d34-20c3-4261-8c0c-6d4eb3e6ac62" />
 <br><br>
 
-- 주문 -> 결제 후 재고 상태 (진행률 63%, 재고 350개) <br>
+- 주문 -> 결제 후 재고 상태 (진행률 63%, 재고 350개) <br><br>
 <img width="800" height="755" alt="image" src="https://github.com/user-attachments/assets/a219af25-c61a-4681-9d78-285e6e95b70e" />
 <br>
 <br>
@@ -229,26 +234,36 @@ GongGuHaSong/
 <br>
 => 각자 요청 시 재고를 수시로 덮어씌워서 (예: VU-1~50이 동시에 stock=100 읽음 → 각자 99로 저장 → 50건 차감인데 1건만 반영)<br>
 -200개가 아닌 33개 남은 것이 된 것으로 추정 <br>
-=> 결론: 300건 중 300건 모두 결제 완료, 재고 33개 남음 (결제 건수가 목표 대비 200% 초과) <br>
+=> 결과: 300건 중 300건 모두 결제 완료 (결제 건수 목표 대비 200% 초과), 재고 33개 남음  <br>
                                                                                  
 <br>
 <br>
 
-- After (findAndModify로 조회+차감 원자성 보장) <br>
+<br>
+<br>
+<br>
+
+- After (findAndModify로 조회+차감 원자성 보장) <br><br>
 <img width="733" height="758" alt="image" src="https://github.com/user-attachments/assets/e4fe6557-0642-4c58-b052-43db60af76ca" />
 
 <br>
 <br>
-=> 성공률 33.3% <br>
-=> 결론: 300명의 유저의 동시 요청 중 100건만 결제 완료, 재고 0개 남음
+=> 결과: 300명의 유저의 동시 요청 중 100건만 결제 완료, 재고 0개 남음 (정확도 100%)
+<br>
+<br>
+
+<br>
 <br>
 <br>
 <img width="785" height="511" alt="image" src="https://github.com/user-attachments/assets/901246d3-78f7-47a4-be9f-43ec98631c31" />
 
 <br>
 <br>
-=> 성공률 33.3% <br>
-=> 결론: 3000명의 유저의 동시 요청 중 100건만 결제 완료, 재고 0개 남음
+=> 결과: 3000명의 유저의 동시 요청 중 100건만 결제 완료, 재고 0개 남음 (정확도 100%)
+
+<br>
+<br>
+<br>
 
 <br>
 <br>
@@ -268,23 +283,39 @@ GongGuHaSong/
 
 <br>
 
+<br>
 - before (보상 없음) <br>
-<img width="786" height="702" alt="image" src="https://github.com/user-attachments/assets/d9839180-14e3-422d-b481-b1a260d5b090" /> <br>
+<img width="764" height="687" alt="image" src="https://github.com/user-attachments/assets/5760bd15-5a84-4284-b92f-b72d776a4915" />
 <br>
-=> 성공률 73.58% (기대는 90%이지만 외부 요인이 더해져 성공률이 낮아짐)
-=> 결론: 실제 요청 8360건 중 10%의 결제 실패 유도로 약 824건의 결제 실패가 있었으며, 그 중 715건의 포인트 유실이 발생 (86.8% 유실)
+<br>
+<br>
+=> 성공률 71.78% (기대는 90%이지만 외부 요인이 더해져 성공률이 낮아짐), 실시간 누락 건수 656건 <br>
+=> 결과: 실제 요청 7263건 중 10%의 결제 실패 유도로 약 726건의 결제 실패가 있었으며, 그 중 656건의 포인트 유실이 발생 (90.4% 유실)
 
 <br>
 <br>
 
-- after (SAGA 보상 트랜잭션) <br>
+<br>
+<br>
+<br>
+- after (SAGA 보상 트랜잭션 + Outbox) <br>
+<img width="773" height="753" alt="image" src="https://github.com/user-attachments/assets/efec7c33-c6e5-48ef-95ba-d29302fa5583" />
+<br>
+<br>
+=> 성공률 73.74%, 실시간 누락 건수 854건 — 그러나 k6 test 후 DB 조회 최종 유실 0건 <br>
+=> 결과: 실제 요청 7,408건 중 10%의 결제 실패 유도로 약 740건의 결제 실패가 있었으며, 실시간 측정에서는 854건의 유실이 감지되었으나 (부하로 인한 타임아웃 이슈 예상) <br> 
+SAGA 보상 + Outbox 재시도 완료 후 최종 유실 0건 (100% 복구)  
 
 
 <br>
 <br>
 <br>
 
-## 기술적 의사결정 & 트러블슈팅
+<br>
+<br>
+<br>
+
+# 기술적 의사결정 & 트러블슈팅
 
 ### 분산 트랜잭션 & 동시성 & MongoDB→MySQL 전환
 > [PAYMENT_TROUBLESHOOTING.md](docs/PAYMENT_TROUBLESHOOTING.md)
