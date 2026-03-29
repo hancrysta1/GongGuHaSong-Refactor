@@ -320,8 +320,17 @@ SAGA 보상 + Outbox 재시도 완료 후 최종 유실 0건 (100% 복구)
 ### 분산 트랜잭션 & 동시성 & MongoDB→MySQL 전환
 > [PAYMENT_TROUBLESHOOTING.md](docs/PAYMENT_TROUBLESHOOTING.md)
 
-- Chaos Engineering으로 22,998건 중 2,380건 유실 → SAGA 보상 트랜잭션 → 99.2% 개선
-- MongoDB `findAndModify` 한계 발견 → MySQL `SELECT FOR UPDATE` 리팩토링, ACID 전부 테스트 검증
+- Chaos Engineering(장애 주입 10%)으로 포인트 유실률 90.4% 확인 → SAGA + CompensationOutbox 적용 → 최종 유실 0건
+- 재고 동시성: MongoDB `findAndModify` 원자적 차감 → 300명/3000명 동시 주문에서 초과 판매 0건
+- 포인트 동시성: MongoDB `findAndModify` 한계 발견 → MySQL `SELECT FOR UPDATE` 리팩토링
+- 낙관적 락/비관적 락 충돌 발견 → 금전 도메인 비관적 락 통일
+
+### k6 부하 테스트
+> [LOAD_TEST.md](docs/LOAD_TEST.md)
+
+- 재고 동시성 Before/After: 300명 동시 주문 → 초과 판매(300건 성공) → findAndModify 적용 후 정확히 100건만 성공
+- SAGA 보상 3단계 비교: Before(90.4% 유실) → SAGA only(97.1%, 오히려 악화) → SAGA+Outbox(0% 유실)
+- 테스트 설계 과정: 1인 1결제 원칙, 장애 주입 방식 선택 근거
 
 ### 실시간 검색어 랭킹
 > [REALTIME_SEARCH.md](docs/REALTIME_SEARCH.md)
