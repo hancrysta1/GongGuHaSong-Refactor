@@ -154,10 +154,11 @@ GongGuHaSong/
 <br>
 <br>
 
-## 시연
+# 시연
+
 <br>
 
-### 실시간 검색어 (키워드) <br>
+## 실시간 검색어 (키워드) <br>
 
 ```
 랭킹 점수 = 검색횟수 × 0.4  +  주문량 × 0.6   (최근 1시간 기준)
@@ -171,12 +172,12 @@ GongGuHaSong/
 <br>
 <br>
 
-- 실검 랭킹 변화 1) 단순 검색 시 (가중치 0.4) <br>
+- 단순 검색 시 (가중치 0.4) <br>
 ![Image](https://github.com/user-attachments/assets/868beffe-5022-480c-8b13-4238d458166f)
 
 <br>
 <br>
-- 2) 주문 전/후 비교 <br> 
+- 주문 전/후 비교 (가중치 0.6) <br> 
 전 (단순 검색만 진행했을 때) <br>
 <img width="266" height="211" alt="image" src="https://github.com/user-attachments/assets/b9d8cfa2-2bf5-4530-9a6e-cfa105f9c411" />
 <br><br>
@@ -186,7 +187,7 @@ GongGuHaSong/
 <br>
 
 
-### 주문 & 결제 <br>
+## 주문 & 결제 <br>
 <br>
 
 - 결제 전 금액 상태 (포인트 10만p, 카드 잔여 한도 1,010,000원) <br>
@@ -219,13 +220,19 @@ GongGuHaSong/
 
 <br>
 <br>
+<br>
+<br>
+
+## 테스트
 
 ### 부하 테스트(1) 재고 동시성 (mongoDB) <br>
 
 ```
-100개의 재고를 가진 물품을 300명의 유저가 동시 구매하는 시나리오를 가정함.
+100개의 재고를 가진 물품을 최대 10,000명의 유저가 동시 구매하는 시나리오를 가정.
 ```
 
+<br>
+<br>
 <br>
 
 -  before (동시성 보장 전) <br>
@@ -244,7 +251,7 @@ GongGuHaSong/
 <br>
 <br>
 
-- After (findAndModify로 조회+차감 원자성 보장 + 재고 정합성 보장) <br><br>
+- After (findAndModify로 조회+차감 원자성 보장 + 재고 정합성 보장) <br>
 <img width="733" height="758" alt="image" src="https://github.com/user-attachments/assets/e4fe6557-0642-4c58-b052-43db60af76ca" />
 
 <br>
@@ -297,13 +304,14 @@ GongGuHaSong/
 고로, 네트워크의 장애가 발생하는 시나리오로 10%의 의도적 실패 주입 -> 복구 확인이 목표.
 ```
 <br>
-
+<br>
 <br>
 
 <br>
+
 - before (보상 없음) <br>
+
 <img width="764" height="687" alt="image" src="https://github.com/user-attachments/assets/5760bd15-5a84-4284-b92f-b72d776a4915" />
-<br>
 <br>
 <br>
 => 성공률 71.78% (기대는 90%이지만 외부 요인이 더해져 성공률이 낮아짐), 실시간 누락 건수 656건 <br>
@@ -315,6 +323,7 @@ GongGuHaSong/
 <br>
 <br>
 <br>
+
 - after (SAGA 보상 트랜잭션 + Outbox) <br>
 <img width="773" height="753" alt="image" src="https://github.com/user-attachments/assets/efec7c33-c6e5-48ef-95ba-d29302fa5583" />
 <br>
