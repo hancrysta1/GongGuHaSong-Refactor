@@ -334,7 +334,7 @@ MongoDB 트랜잭션으로도 해결할 수 있었다. 하지만.
 
 결제 도메인에서 겪은 세 가지 문제를 순차적으로 해결한 과정.
 
-1. 분산 트랜잭션 (SAGA): 결제 실패 시 포인트 유실 → Chaos Engineering으로 22,998건 중 2,380건 유실 확인 → SAGA 보상 트랜잭션 적용 → 99.2% 개선
+1. 분산 트랜잭션 (SAGA): 결제 실패 시 포인트 유실 → Chaos Engineering(장애 주입 10%)으로 7,263건 중 656건 유실 확인 (90.4%) → SAGA + CompensationOutbox 적용 → 최종 유실 0건 (100% 복구)
 2. 동시성 제어: SAGA 적용 후 남은 18건 추적 → Lost Update/Overdraft 발견 → MongoDB `findAndModify`로 1차 해결 → 마이너스 잔액 0건
 3. MongoDB → MySQL 리팩토링: `findAndModify`로 차감은 안전하지만 이력과 별도 연산 → MongoDB 트랜잭션 검토 → 금전 도메인 특성상 RDBMS가 적합 → MySQL `@Transactional` + `SELECT FOR UPDATE` → 차감=이력 100% 일치, ACID 4속성 전부 검증
 
@@ -400,8 +400,8 @@ MongoDB 트랜잭션으로도 해결할 수 있었다. 하지만.
 
 | 항목 | 수치 |
 |------|------|
-| 부하 테스트 규모 | 동시 300명, 22,000건 결제 |
-| SAGA 도입 효과 | 포인트 유실률 10.35% → 0.08% (99.2% 개선) |
+| 부하 테스트 규모 | 동시 300명 + 장애 주입 10% |
+| SAGA 도입 효과 | 포인트 유실률 90.4% → 0% (SAGA + Outbox) |
 | 동시성 제어 | 마이너스 잔액 0건, 이중 차감 0건, 차감=이력 100% 일치 |
 | DB 리팩토링 | point/payment-service MongoDB → MySQL 전환 (Polyglot Persistence) |
 | 정상 상황 성공률 | 99.71% (장애 없이 동시 300명) |

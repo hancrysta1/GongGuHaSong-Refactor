@@ -390,7 +390,7 @@ spring.
 ### 현재 프로젝트에서 적용된 것
 
 1. Polyglot Persistence — 금전 도메인(point, payment)은 MongoDB → MySQL로 리팩토링 완료. ACID 트랜잭션 네이티브 지원
-2. SAGA 보상 트랜잭션 — 결제 실패 시 포인트/카드 자동 롤백 (Chaos Engineering으로 99.2% 개선 확인)
+2. SAGA 보상 트랜잭션 + CompensationOutbox — 결제 실패 시 포인트/카드 자동 롤백 (Chaos Engineering으로 유실률 90.4% → 0%)
 3. 동시성 제어 — `@Transactional` + `SELECT FOR UPDATE` 비관적 락 (마이너스 잔액 0건)
 4. API 기반 데이터 접근 — 서비스 간 직접 DB 접근 없음 (REST, Kafka)
 5. 카드번호 마스킹 — API 응답에서 `---1234` 형태로 반환
