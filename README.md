@@ -188,11 +188,11 @@ GongGuHaSong/
 ### 주문 & 결제 <br>
 <br>
 
-- 결제 전 금액 상태 (포인트 10만p, 카드 잔여 한도 1,010,000원) <br><br>
+- 결제 전 금액 상태 (포인트 10만p, 카드 잔여 한도 1,010,000원) <br>
 <img width="800" height="842" alt="image" src="https://github.com/user-attachments/assets/d37962fa-157a-446b-b659-02641ceaa151" />
 <br><br>
 
-- 결제 전 재고 상태 (진행률 38%, 재고 370개) <br><br>
+- 결제 전 재고 상태 (진행률 38%, 재고 370개) <br>
 <img width="800" height="766" alt="image" src="https://github.com/user-attachments/assets/a7cec371-2209-4d53-af24-b6b0d5d7c0ab" />
 <br>
 <br>
@@ -203,14 +203,14 @@ GongGuHaSong/
 <br>
 <br>
 
-- 주문 -> 결제 후 금액 상태 (포인트 2000p, 카드 잔여 한도 210,000원) <br><br>
+- 주문 -> 결제 후 금액 상태 (포인트 2000p, 카드 잔여 한도 210,000원) <br>
 => 포인트 -10만p, 카드 -80만 (총 90만) + 포인트 적립 2000p (20개 * 개당 100p 적립)
 <br>
 <br>
 <img width="800" height="788" alt="image" src="https://github.com/user-attachments/assets/00f13d34-20c3-4261-8c0c-6d4eb3e6ac62" />
 <br><br>
 
-- 주문 -> 결제 후 재고 상태 (진행률 63%, 재고 350개) <br><br>
+- 주문 -> 결제 후 재고 상태 (진행률 63%, 재고 350개) <br>
 <img width="800" height="755" alt="image" src="https://github.com/user-attachments/assets/a219af25-c61a-4681-9d78-285e6e95b70e" />
 <br>
 <br>
