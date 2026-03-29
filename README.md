@@ -146,9 +146,10 @@ GongGuHaSong/
 
 | 항목 | Before | After |
 |------|--------|-------|
-| 결제 장애 시 포인트 유실 | 10.35% (k6 장애 주입 테스트) | 0.08% (SAGA 보상 트랜잭션) |
-| 동시 결제 시 이중 차감 / 마이너스 잔액 | 발생 | 0건 (MySQL SELECT FOR UPDATE) |
-| 포인트 차감-이력 불일치 | 발생 (MongoDB 별도 연산) | 0건 (MySQL @Transactional) |
+| 결제 장애 시 포인트 유실 | 90.4% (장애 주입 10%, 보상 없음) | 0건 (SAGA + CompensationOutbox) |
+| 재고 초과 판매 | 300명 전원 성공 (재고 100개인데 300건 판매) | 정확히 100건만 성공 (MongoDB findAndModify) |
+| 동시 결제 시 마이너스 잔액 | 발생 | 0건 — 21만 건 동시 적립/차감에서도 0건 (MySQL SELECT FOR UPDATE) |
+| 포인트 차감-이력 간 누락 | 발생 (MongoDB 별도 연산) | 0건 (MySQL @Transactional) |
 
 <br>
 <br>
