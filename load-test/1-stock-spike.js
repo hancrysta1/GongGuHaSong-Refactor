@@ -16,8 +16,8 @@ export const options = {
   scenarios: {
     spike: {
       executor: 'shared-iterations',
-      vus: 10000,
-      iterations: 10000,
+      vus: 30000,
+      iterations: 30000,
       maxDuration: '2m',
     },
   },
@@ -28,7 +28,7 @@ export function setup() {
 
   console.log('==============================================');
   console.log('  재고 스파이크 테스트');
-  console.log('  재고 100개에 10000명이 동시 주문');
+  console.log('  재고 100개에 30000명이 동시 주문');
   console.log('  성공 = 100, 재고 = 0 이면 통과');
   console.log('==============================================');
 
@@ -107,7 +107,7 @@ export function teardown(data) {
 
   console.log('');
   console.log('==============================================');
-  console.log(`  10000명 동시 주문 결과`);
+  console.log(`  30000명 동시 주문 결과`);
   console.log(`  최종 재고: ${finalStock}`);
   console.log('  성공 = 100, 재고 = 0 이면 findAndModify 정상');
   console.log('==============================================');
