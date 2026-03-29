@@ -19,7 +19,8 @@
 <br>
 
 ## 서비스 아키텍처
-<img width="2940" height="1077" alt="image" src="https://github.com/user-attachments/assets/ea1d12cc-0405-4c2d-9dc8-3ac79c09542d" />
+<img width="1440" height="642" alt="image" src="https://github.com/user-attachments/assets/90027b21-24e6-4486-a03f-79a1164e642d" />
+
 
 <br>
 
@@ -37,7 +38,7 @@ docker compose up -d
 ```
 GongGuHaSong/
 ├── member-service/         # 회원 관리 (MongoDB)
-├── product-service/        # 상품 관리 (MongoDB + Redis)
+├── product-service/        # 상품 관리 (MongoDB + Redis + Kafka 캐시 동기화)
 ├── order-service/          # 주문 처리 (MongoDB + Kafka)
 ├── payment-service/        # 결제 — SAGA Orchestrator (MySQL)
 ├── point-service/          # 포인트 — SELECT FOR UPDATE (MySQL + Redis)
@@ -50,32 +51,31 @@ GongGuHaSong/
 ## 주문·결제 흐름
 ### 주문 → Kafka 팬아웃
 
-> 1건 주문이 4개 서비스에 동시 전달되는 이벤트 드리븐 구조
+> 1건 주문이 3개 서비스에 동시 전달되는 이벤트 드리븐 구조
 >
 <br>
-<img width="2580" height="1074" alt="image" src="https://github.com/user-attachments/assets/8aa5f892-ddee-4bd9-80d7-f7c6d0595c8a" />
+<img width="800" height="1250" alt="image" src="https://github.com/user-attachments/assets/50afe0e4-1c8b-45a0-9c89-308bc1b9c103" />
+
+
+
 <br>
 
 | 단계 | 흐름 | 방식 | 이유 |
 |------|------|------|------|
 | 재고 차감 | Order → Product | Feign 동기 | 재고 부족 시 즉시 거절 |
-| 후속 처리 | Order → Kafka → Payment, Point, Search, Product | 비동기 팬아웃 | 재고예약·적립·랭킹·캐시 = 도메인 다름 |
+| 후속 처리 | Order → Kafka → Point, Search, Product | 비동기 팬아웃 | 적립·랭킹·캐시 = 도메인 다름 |
+| 결제 | 클라이언트 → Payment (SAGA) | REST 동기 | 포인트 차감·카드 결제·보상까지 오케스트레이터가 순서 제어 |
+
+
 
 
 <br>
 <br>
 
 ### 결제 — SAGA Orchestration
-<img width="521" height="495" alt="image" src="https://github.com/user-attachments/assets/6f35b9d6-4463-4d34-94f9-5ab2825d73ce" />
 <br>
+<img width="800" height="1546" alt="image" src="https://github.com/user-attachments/assets/4ad70683-f29e-48d7-a75a-31826fd40b82" />
 
-> Payment가 오케스트레이터로서 STEP 1~3을 순서대로 실행. 실패 시 역순 보상.
-
-<br>
-
-<img width="659" height="463" alt="image" src="https://github.com/user-attachments/assets/aabfa116-3f28-4446-9022-df06869ebdbc" />
-
-<br>
 
 
 | | 성공 흐름 | 실패 시 보상 |
@@ -109,8 +109,7 @@ GongGuHaSong/
 
 ## 원본
 - 깃허브 링크 : https://github.com/GongGuHaSong/GongGuHaSong
-- 공구 참여 요청, 쪽지, 찜, 회원가입 기능 개발
-- MongoDB 설계, React 프론트엔드
+- 프로젝트 요약: 교내 공구를 위한 사이트, 공구 참여 요청, 쪽지, 찜, 회원가입 기능
 
 <br>
 <br>
@@ -129,22 +128,6 @@ GongGuHaSong/
 <br>
 <br>
 
-### 아키텍처
-
-| | Before | After | 왜 |
-|---|---|---|---|
-| 구조 | 모놀리식 Spring Boot 1개 | MSA 6개 서비스 분리 | 서비스별 독립 배포 + DB 기술 선택 자유 (Polyglot) |
-| 배포 | 없음 | Docker Compose | 6개 서비스 + 인프라 통합 구동 |
-| 서비스 간 통신 | — | Feign(동기) + Kafka(비동기) + RestTemplate | 재고·잔액 검증은 동기, 적립·랭킹 등 후속 처리는 비동기 |
-| 결제 트랜잭션 | — | SAGA Orchestration + CompensationOutbox | MSA에서 `@Transactional`이 안 통하므로 역순 보상 + 실패 시 Outbox 재시도 |
-| 동시성 제어 | — | MySQL `SELECT FOR UPDATE` | MongoDB `findAndModify`로는 차감+이력 원자성 불가 → MySQL 전환 |
-| DB | MongoDB 1개 | MongoDB + MySQL + ES (Polyglot) | 금전 도메인은 ACID 필수 → MySQL, 검색은 역인덱스 필요 → ES |
-| 캐시 | 없음 | Redis + Kafka 이벤트로 캐시 동기화 | 주문 발생 시 Kafka → Product 서비스가 주문 수량 캐시 갱신 |
-| 부하 테스트 | 없음 | k6 동시 300명 22,000건 + 장애 주입 SAGA 검증 | 정합성을 수치로 증명 (유실률 10.35% → 0.08%) |
-
-
-<br>
-<br>
 
 ### 기술 스택
 
@@ -171,24 +154,133 @@ GongGuHaSong/
 <br>
 
 ## 시연
-- 실시간 검색어 (키워드) <br>
-![Image](https://github.com/user-attachments/assets/69684d57-30f6-46e9-82e0-77e06751ee69)
+<br>
 
-- 주문 & 결제
-<img width="1209" height="752" alt="image" src="https://github.com/user-attachments/assets/4b06a5b7-2c85-4425-b468-178a3f0fb1fa" />
+### 실시간 검색어 (키워드) <br>
+
+```
+랭킹 점수 = 검색횟수 × 0.4  +  주문량 × 0.6   (최근 1시간 기준)
+```
+
+| 가중치 | 지표 | 이유 |
+|--------|------|------|
+| **0.4** | 검색횟수 (최근 1시간) | 관심도 반영 |
+| **0.6** | 주문량 (최근 1시간) | 실제 구매 전환이 더 강한 신호 |
+
+<br>
+<br>
+
+- 실검 랭킹 변화 1) 단순 검색 시 (가중치 0.4) <br>
+![Image](https://github.com/user-attachments/assets/868beffe-5022-480c-8b13-4238d458166f)
+
+<br>
+<br>
+- 2) 주문 시 <br> 
+전 <br>
+<img width="266" height="211" alt="image" src="https://github.com/user-attachments/assets/b9d8cfa2-2bf5-4530-9a6e-cfa105f9c411" />
+<br>
+후 (가중치 0.6) <br>
+<img width="327" height="259" alt="image" src="https://github.com/user-attachments/assets/4a5169c6-6e74-4f99-ba0f-cfe3f86cf420" />
+<br>
+<br>
 
 
-<!-- 아래 항목들을 GIF 또는 스크린샷으로 추가 -->
+### 주문 & 결제 <br>
+- 결제 전 금액 상태 (포인트 10만p, 카드 잔여 한도 1,010,000원) <br>
+<img width="800" height="842" alt="image" src="https://github.com/user-attachments/assets/d37962fa-157a-446b-b659-02641ceaa151" />
+<br>
+- 결제 전 재고 상태 (진행률 38%, 재고 370개)
+<img width="800" height="766" alt="image" src="https://github.com/user-attachments/assets/a7cec371-2209-4d53-af24-b6b0d5d7c0ab" />
+<br>
+<br>
 
-| 시연 항목 | 설명 |
-|-----------|------|
-| 결제 흐름 | 상품 선택 → 장바구니 → 포인트/카드 결제 → 주문 완료 |
-| 실시간 랭킹 | 검색/주문 시 랭킹 실시간 변동 (WebSocket push) |
-| 재고 차감 | 수량 조절 → 최소수량 달성률 표시 → 재고 자동 차감 |
-| k6 부하 테스트 | 터미널에서 300명 동시 결제 돌아가는 모습 + 결과 summary |
+- 주문 과정 gif (잔액-재고-실검 흐름 확인, 잔액과 재고는 차감되고 실검은 구매(0.6)*검색(0.4) 비율에 따라 랭킹 실시간 재조정)
+![Image](https://github.com/user-attachments/assets/c139c97b-2b09-4318-ace9-5bf6c8005669)
 
-> 시연 영상/GIF 준비 후 교체 예정
+<br>
+<br>
 
+- 주문 -> 결제 후 금액 상태 (포인트 2000p, 카드 잔여 한도 210,000원) <br>
+=> 포인트 -10만p, 카드 -80만 (총 90만) + 포인트 적립 2000p (20개 * 개당 100p 적립)
+<img width="800" height="788" alt="image" src="https://github.com/user-attachments/assets/00f13d34-20c3-4261-8c0c-6d4eb3e6ac62" />
+<br><br>
+
+- 주문 -> 결제 후 재고 상태 (진행률 63%, 재고 350개) <br>
+<img width="800" height="755" alt="image" src="https://github.com/user-attachments/assets/a219af25-c61a-4681-9d78-285e6e95b70e" />
+<br>
+<br>
+
+
+<br>
+<br>
+
+### 부하 테스트(1) 재고 동시성 <br>
+
+```
+100개의 재고를 가진 물품을 300명의 유저가 동시 구매하는 시나리오를 가정함.
+```
+
+<br>
+
+-  before (동시성 보장 전) <br>
+
+<img width="744" height="770" alt="image" src="https://github.com/user-attachments/assets/fa8ce06a-7c27-4c45-863a-63d555773150" />
+<br>
+<br>
+=> 각자 요청 시 재고를 수시로 덮어씌워서 (예: VU-1~50이 동시에 stock=100 읽음 → 각자 99로 저장 → 50건 차감인데 1건만 반영)<br>
+-200개가 아닌 33개 남은 것이 된 것으로 추정 <br>
+=> 결론: 300건 중 300건 모두 결제 완료, 재고 33개 남음 (결제 건수가 목표 대비 200% 초과) <br>
+                                                                                 
+<br>
+<br>
+
+- After (findAndModify로 조회+차감 원자성 보장) <br>
+<img width="733" height="758" alt="image" src="https://github.com/user-attachments/assets/e4fe6557-0642-4c58-b052-43db60af76ca" />
+
+<br>
+<br>
+=> 성공률 33.3% <br>
+=> 결론: 300명의 유저의 동시 요청 중 100건만 결제 완료, 재고 0개 남음
+<br>
+<br>
+<img width="785" height="511" alt="image" src="https://github.com/user-attachments/assets/901246d3-78f7-47a4-be9f-43ec98631c31" />
+
+<br>
+<br>
+=> 성공률 33.3% <br>
+=> 결론: 3000명의 유저의 동시 요청 중 100건만 결제 완료, 재고 0개 남음
+
+<br>
+<br>
+<br>
+
+### Chaos 테스트(2) 결제 보상 로직 <br>
+
+```
+결제 실패 시, 원자적으로 처리 된 재고/포인트/결제 로직이 제대로 원상 복구되는지 테스트.
+1인 1결제로 공유 자원은 없지만,
+커넥션 풀의 이슈/n명의 실패 데이터가
+유실 되지 않고 잘 전달되어 복구에 성공하는가 확인하는 데 의의가 있음.
+(실제 서비스에 여러 유저가 몰렸을 때에도 안전하게 금액의 정합성을 보장하기 위함)
+고로, 네트워크의 장애가 발생하는 시나리오로 10%의 의도적 실패 주입 -> 복구 확인이 목표.
+```
+<br>
+
+<br>
+
+- before (보상 없음) <br>
+<img width="786" height="702" alt="image" src="https://github.com/user-attachments/assets/d9839180-14e3-422d-b481-b1a260d5b090" /> <br>
+<br>
+=> 성공률 73.58% (기대는 90%이지만 외부 요인이 더해져 성공률이 낮아짐)
+=> 결론: 실제 요청 8360건 중 10%의 결제 실패 유도로 약 824건의 결제 실패가 있었으며, 그 중 715건의 포인트 유실이 발생 (86.8% 유실)
+
+<br>
+<br>
+
+- after (SAGA 보상 트랜잭션) <br>
+
+
+<br>
 <br>
 <br>
 
