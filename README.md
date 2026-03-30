@@ -328,6 +328,9 @@ DB 비관적 락 vs Redis 분산 락 정량 비교
 | 마이너스 잔액 | 0명 | 0명 |
 
 <br>
+<img width="810" height="774" alt="image" src="https://github.com/user-attachments/assets/3efda334-2d13-4675-a547-ec78999da36a" />
+
+<br>
 
 => 결과: Redis 분산 락이 처리량 34% 높고, p95 지연은 35% 낮음 <br>
 => DB 비관적 락은 락을 대기하면서도 커넥션을 점유하기 때문에 요청이 많아지면 그만큼 부하가 발생한다.<br>
