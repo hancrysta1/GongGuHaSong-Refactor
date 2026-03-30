@@ -1,0 +1,100 @@
+version: '3.8'
+
+# 멀티 인스턴스 벤치마크용 오버라이드
+# 6대: docker compose -f docker-compose.yml -f docker-compose.scale.yml up -d mysql redis point-service-1 point-service-2 point-service-3 point-service-4 point-service-5 point-service-6 point-lb
+
+services:
+  point-service-1:
+    build: ./point-service
+    expose:
+      - "8084"
+    depends_on:
+      - mysql
+      - redis
+    environment: &point-env
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/point_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - SPRING_REDIS_HOST=redis
+      - EUREKA_CLIENT_ENABLED=false
+      - SPRING_CLOUD_DISCOVERY_ENABLED=false
+      - SERVER_PORT=8084
+    networks:
+      - gonggu-network
+
+  point-service-2:
+    build: ./point-service
+    expose:
+      - "8084"
+    depends_on:
+      - mysql
+      - redis
+    environment: *point-env
+    networks:
+      - gonggu-network
+
+  point-service-3:
+    build: ./point-service
+    expose:
+      - "8084"
+    depends_on:
+      - mysql
+      - redis
+    environment: *point-env
+    networks:
+      - gonggu-network
+
+  point-service-4:
+    build: ./point-service
+    expose:
+      - "8084"
+    depends_on:
+      - mysql
+      - redis
+    environment: *point-env
+    networks:
+      - gonggu-network
+
+  point-service-5:
+    build: ./point-service
+    expose:
+      - "8084"
+    depends_on:
+      - mysql
+      - redis
+    environment: *point-env
+    networks:
+      - gonggu-network
+
+  point-service-6:
+    build: ./point-service
+    expose:
+      - "8084"
+    depends_on:
+      - mysql
+      - redis
+    environment: *point-env
+    networks:
+      - gonggu-network
+
+  # Nginx 로드밸런서 (6개 인스턴스에 라운드로빈)
+  point-lb:
+    image: nginx:alpine
+    ports:
+      - "8090:8090"
+    volumes:
+      - ./nginx-point-lb.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - point-service-1
+      - point-service-2
+      - point-service-3
+      - point-service-4
+      - point-service-5
+      - point-service-6
+    networks:
+      - gonggu-network
+
+networks:
+  gonggu-network:
+    driver: bridge
