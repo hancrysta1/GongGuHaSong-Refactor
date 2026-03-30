@@ -4,4 +4,8 @@ dependencies {
     implementation 'mysql:mysql-connector-java:8.0.33'
     implementation 'org.springframework.kafka:spring-kafka'
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    implementation 'org.redisson:redisson-spring-boot-starter:3.23.5'
+
+    testImplementation 'com.h2database:h2'
+    testImplementation 'it.ozimov:embedded-redis:0.7.3' exclude group: 'org.slf4j', module: 'slf4j-simple'
 }
