@@ -3,7 +3,6 @@ package GongGuHaSong.point.web;
 import GongGuHaSong.point.domain.Point;
 import GongGuHaSong.point.domain.PointHistory;
 import GongGuHaSong.point.service.PointService;
-import GongGuHaSong.point.service.RedisLockPointFacade;
 import GongGuHaSong.point.web.dto.PointEarnDto;
 import GongGuHaSong.point.web.dto.PointUseDto;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +16,6 @@ import java.util.List;
 public class PointController {
 
     private final PointService pointService;
-    private final RedisLockPointFacade redisLockPointFacade;
 
     @GetMapping("/{userId}")
     public Point getPoint(@PathVariable String userId) {
@@ -37,11 +35,6 @@ public class PointController {
     @PostMapping("/use")
     public Point usePoints(@RequestBody PointUseDto dto) {
         return pointService.usePoints(dto.getUserId(), dto.getAmount(), dto.getDescription());
-    }
-
-    @PostMapping("/use/redis-lock")
-    public Point usePointsWithRedisLock(@RequestBody PointUseDto dto) {
-        return redisLockPointFacade.usePoints(dto.getUserId(), dto.getAmount(), dto.getDescription());
     }
 
     @PostMapping("/cancel")
