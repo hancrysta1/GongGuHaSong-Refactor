@@ -158,6 +158,53 @@ After (개선).
 - 비동기 처리 시 잔액 부족인데 결제가 진행되는 정합성 문제 발생
 - 반면 적립은 실패해도 나중에 보상 가능 → 비동기(Kafka) 적합
 
+### 6. 포인트 동시성 제어 — DB 비관적 락 → Redis 분산 락
+
+**DB 비관적 락 (`PointService`)**
+
+```java
+@Transactional  // ← 이 시점에 HikariCP에서 DB 커넥션 획득
+public Point usePoints(String userId, int amount, String description) {
+    Point point = pointRepository.findByUserIdForUpdate(userId);  // SELECT FOR UPDATE → 행 잠금
+    // 락은 COMMIT할 때 풀린다 → 트랜잭션이 끝나야 커넥션도 반환됨
+    // 같은 행에 대기 중인 다른 요청은 커넥션을 물고 대기
+    point.setAvailablePoints(point.getAvailablePoints() - amount);
+    pointHistoryRepository.save(history);
+}
+```
+
+문제: `SELECT FOR UPDATE`의 락 범위 = 트랜잭션 범위. 락을 못 잡아도 트랜잭션이 끝나기 전까지 커넥션을 반환할 수 없다. 단일 인스턴스에서는 문제없지만, 인스턴스가 늘어나면 커넥션 풀이 같은 행에 경합하여 풀 고갈 발생.
+
+**Redis 분산 락 (`RedisLockPointFacade` + `RedisLockPointInnerService`)**
+
+```java
+// RedisLockPointFacade — 락 획득 (트랜잭션 바깥)
+public Point usePoints(String userId, int amount, String description) {
+    RLock lock = redissonClient.getLock("point:lock:" + userId);  // ① Redis 락 획득
+    boolean acquired = lock.tryLock(10, 15, TimeUnit.SECONDS);    //    못 잡으면 Pub/Sub 대기 (DB 커넥션 없음)
+    return innerService.usePoints(userId, amount, description);   // ② 락 잡은 후 트랜잭션 시작
+    lock.unlock();                                                // ④ Redis 락 해제
+}
+
+// RedisLockPointInnerService — 실제 DB 작업 (별도 Bean)
+@Transactional  // ← 이 시점에 DB 커넥션 획득 (락은 이미 잡은 상태)
+public Point usePoints(String userId, int amount, String description) {
+    Point point = pointRepository.findByUserId(userId);  // ③ SELECT FOR UPDATE 없이 조회
+    point.setAvailablePoints(point.getAvailablePoints() - amount);
+    pointHistoryRepository.save(history);
+    // COMMIT → 커넥션 반환
+}
+```
+
+핵심 차이:
+- 락 대기가 `@Transactional` **바깥**에서 일어남 → 대기 중 DB 커넥션 점유 없음
+- `innerService`를 별도 Bean으로 분리한 이유: 같은 클래스 내 호출은 Spring AOP 프록시가 적용되지 않아 `@Transactional`이 동작하지 않기 때문
+- Redis에서 이미 직렬화했으므로 DB에서 `SELECT FOR UPDATE` 불필요 → 일반 `findByUserId`로 조회
+
+부하 테스트 결과 (point-service 3대, 300 VU, 2분):
+- DB 비관적 락: 30,145건 (251 TPS), p95 1.09s
+- Redis 분산 락: 40,580건 (338 TPS), p95 704ms → **처리량 34%↑, p95 35%↓**
+
 ---
 
 ## 서비스 간 통신 패턴 정리
