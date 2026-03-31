@@ -72,8 +72,13 @@ public class PaymentService {
                     cardAmount = totalAmount;
                     Map<String, Object> cardResult = cardService.processCardPayment(cardId, cardAmount);
                     approvalNumber = (String) cardResult.get("approvalNumber");
+                    // PG 응답 서명 검증 — 승인번호 + 금액으로 서명을 재생성하여 PG 응답 위변조 확인
+                    String pgSignature = (String) cardResult.get("signature");
+                    if (!hmacService.verify(approvalNumber, cardAmount, pgSignature)) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "PG 응답 서명 불일치 — 위변조 감지");
+                    }
                     cardCharged = true;
-                    log.info("[SAGA] STEP2: 카드 {}원 결제 (승인번호: {})", cardAmount, approvalNumber);
+                    log.info("[SAGA] STEP2: 카드 {}원 결제 (승인번호: {}, PG 서명 검증 통과)", cardAmount, approvalNumber);
                     break;
 
                 case "CARD_AND_POINT":
@@ -85,6 +90,10 @@ public class PaymentService {
                     if (cardAmount > 0) {
                         Map<String, Object> mixedResult = cardService.processCardPayment(cardId, cardAmount);
                         approvalNumber = (String) mixedResult.get("approvalNumber");
+                        String mixedPgSignature = (String) mixedResult.get("signature");
+                        if (!hmacService.verify(approvalNumber, cardAmount, mixedPgSignature)) {
+                            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "PG 응답 서명 불일치 — 위변조 감지");
+                        }
                         cardCharged = true;
                     }
                     log.info("[SAGA] STEP2: 포인트 {}P + 카드 {}원 복합결제", pointUsed, cardAmount);

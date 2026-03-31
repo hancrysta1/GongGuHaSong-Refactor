@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 public class CardService {
 
     private final CardRepository cardRepository;
+    private final HmacService hmacService;
 
     /**
      * 카드 등록 — Mock 카드사 API로 검증 후 DB 저장
@@ -125,16 +126,22 @@ public class CardService {
         log.info("카드 결제 완료: cardId={}, amount={}, remainingLimit={}",
             cardId, amount, card.getCreditLimit() - card.getUsedAmount());
 
-        // Mock 결제 승인 응답
+        // Mock PG 결제 승인 응답
+        String approvalNumber = generateApprovalNumber();
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("resultCode", "0000");
         response.put("resultMessage", "결제 승인 완료");
-        response.put("approvalNumber", generateApprovalNumber());
+        response.put("approvalNumber", approvalNumber);
         response.put("cardCompany", card.getCardCompany());
         response.put("maskedCardNumber", maskCardNumber(card.getCardNumber()));
         response.put("amount", amount);
         response.put("availableAmount", card.getCreditLimit() - card.getUsedAmount());
         response.put("transactionDate", new Date());
+
+        // PG사 응답 서명 — 승인번호 + 금액을 secretKey로 HMAC 서명하여 반환
+        // payment-service가 이 서명을 검증하여 응답 위변조를 방지
+        String pgSignature = hmacService.sign(approvalNumber, amount);
+        response.put("signature", pgSignature);
 
         return response;
     }
