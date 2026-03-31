@@ -65,114 +65,14 @@ GongGuHaSong/
 > `──→` 같은 DB 내 참조 (JPA)  ·  `···→` 서비스 간 논리적 참조 (FK 없음)
 
 ### MySQL
+<img width="800" height="954" alt="image" src="https://github.com/user-attachments/assets/a8dda6bc-dd74-4e58-966b-23e009687227" />
 
-```
-┌─── point_db ──────────────────────────────────────────────────────────────────┐
-│                                                                               │
-│  point                              point_history                             │
-│  ┌────────────────────────┐   1:N   ┌─────────────────────────┐              │
-│  │ PK id                  │◄────────│ PK id                   │              │
-│  │ UK user_id  ···→ member│         │    user_id              │              │
-│  │    total_points        │         │    amount               │              │
-│  │    available_points    │         │    type (EARN/USE/CANCEL)│              │
-│  │    version             │         │    description          │              │
-│  └────────────────────────┘         │    created_at           │              │
-│                                     └─────────────────────────┘              │
-│  SELECT FOR UPDATE (비관적 락) + Redis 분산 락 (Redisson)                      │
-└───────────────────────────────────────────────────────────────────────────────┘
-
-┌─── payment_db ────────────────────────────────────────────────────────────────┐
-│                                                                               │
-│  payment                            cards                                     │
-│  ┌────────────────────────┐   N:1   ┌─────────────────────────┐              │
-│  │ PK id                  │────────→│ PK id                   │              │
-│  │    order_id ···→ order  │         │    user_id  ···→ member │              │
-│  │    user_id  ···→ member│         │    card_number          │              │
-│  │    title, quantity     │         │    card_company         │              │
-│  │    unit_price          │         │    credit_limit         │              │
-│  │    total_amount        │         │    used_amount          │              │
-│  │    point_used          │         │    is_default           │              │
-│  │    card_amount         │         │    status               │              │
-│  │    status              │         └─────────────────────────┘              │
-│  │    payment_method      │                                                   │
-│  │    approval_number     │  compensation_outbox                              │
-│  │    hmac_signature      │  ┌─────────────────────────┐                     │
-│  │    created_at          │  │ PK id                   │                     │
-│  │    completed_at        │  │    order_id ···→ order   │                     │
-│  └────────────────────────┘  │    user_id  ···→ member  │                     │
-│                               │    type (POINT_RESTORE / │                     │
-│                               │      CARD_REFUND /       │                     │
-│                               │      STOCK_RESTORE)      │                     │
-│                               │    amount, target_id     │                     │
-│                               │    status (PENDING /     │                     │
-│                               │      COMPLETED / FAILED) │                     │
-│                               │    retry_count (max 5)   │                     │
-│                               └─────────────────────────┘                     │
-│  SAGA 보상 + CompensationOutbox (30초 폴링 재시도) + HMAC 서명 검증             │
-└───────────────────────────────────────────────────────────────────────────────┘
-```
 
 ### MongoDB + Elasticsearch
+<img width="800" height="1014" alt="image" src="https://github.com/user-attachments/assets/10d99e3e-82e9-41db-bd14-a48c3c70ff22" />
 
-```
-┌─── member-db ─────────────────────────────────────────────────────────────────┐
-│                                                                               │
-│  member                             note                                      │
-│  ┌────────────────────────┐   1:N   ┌─────────────────────────┐              │
-│  │ _id (pid)              │◄────────│ _id                     │              │
-│  │ name, pwd              │         │ sender  ──→ member._id  │              │
-│  │ phone, email           │◄────────│ receiver ──→ member._id │              │
-│  │ address                │         │ title, comment, time    │              │
-│  └────────────────────────┘         └─────────────────────────┘              │
-│                                                                               │
-│  ※ member._id는 모든 서비스에서 userId로 논리적 참조                             │
-└───────────────────────────────────────────────────────────────────────────────┘
 
-┌─── product-db ────────────────────────────────────────────────────────────────┐
-│                                                                               │
-│  sell (상품)                         survey (수량조사)     like (찜)            │
-│  ┌────────────────────────┐         ┌──────────────┐     ┌──────────────┐    │
-│  │ _id                    │         │ _id          │     │ _id          │    │
-│  │ title                  │         │ title        │     │ pid ··→ sell │    │
-│  │ managerId ···→ member  │         │ userId       │     │ name         │    │
-│  │ price, stock           │         │ count        │     │ start/endDate│    │
-│  │ min_count              │         └──────────────┘     │ end          │    │
-│  │ category, info         │                               └──────────────┘    │
-│  │ start/finishDate       │                                                   │
-│  │ mainPhoto, sizePhoto   │  stock: findAndModify 원자적 차감                  │
-│  └────────────────────────┘                                                   │
-└───────────────────────────────────────────────────────────────────────────────┘
 
-┌─── order-db ──────────────────────────────────────────────────────────────────┐
-│                                                                               │
-│  registration (주문)                                                          │
-│  ┌────────────────────────┐                                                   │
-│  │ _id                    │  → Kafka(order-events) 발행                       │
-│  │ title    ···→ sell     │    ├→ point-service: 적립                         │
-│  │ userId   ···→ member   │    ├→ search-service: 랭킹 재계산                 │
-│  │ total_Count, sizeCount │    └→ product-service: 캐시 갱신                  │
-│  │ method (현장배부/택배)  │                                                   │
-│  │ status (PENDING /      │                                                   │
-│  │   CONFIRMED/CANCELLED) │                                                   │
-│  │ createdAt              │                                                   │
-│  └────────────────────────┘                                                   │
-└───────────────────────────────────────────────────────────────────────────────┘
-
-┌─── search-db (MongoDB) + Elasticsearch ───────────────────────────────────────┐
-│                                                                               │
-│  search_log        order_record        products (ES 인덱스)                    │
-│  ┌──────────────┐  ┌──────────────┐   ┌──────────────────────┐               │
-│  │ _id          │  │ _id          │   │ id                   │               │
-│  │ keyword      │  │ title        │   │ title  (nori 분석기)  │               │
-│  │ userId       │  │ count        │   │ info   (nori 분석기)  │               │
-│  │ searchedAt   │  │ orderedAt    │   │ category (Keyword)   │               │
-│  └──────────────┘  └──────────────┘   │ price, stock         │               │
-│                                        │ managerId            │               │
-│  랭킹 = 검색횟수 × 0.4 + 주문량 × 0.6  │ start/finishDate     │               │
-│                   (최근 1시간)          └──────────────────────┘               │
-│                                        ↑ sell (product-db)에서 동기화           │
-└───────────────────────────────────────────────────────────────────────────────┘
-```
 
 <br>
 
@@ -205,6 +105,8 @@ GongGuHaSong/
 <img width="800" height="1546" alt="image" src="https://github.com/user-attachments/assets/4ad70683-f29e-48d7-a75a-31826fd40b82" />
 
 
+<br>
+<br>
 
 | | 성공 흐름 | 실패 시 보상 |
 |---|---|---|
