@@ -38,12 +38,140 @@ docker compose up -d
 ```
 GongGuHaSong/
 ├── member-service/         # 회원 관리 (MongoDB)
-├── product-service/        # 상품 관리 (MongoDB + Redis + Kafka 캐시 동기화)
+│   └── domain: Member, Note
+├── product-service/        # 상품 관리 (MongoDB + Redis + Kafka)
+│   └── domain: Sell, Survey, Like
 ├── order-service/          # 주문 처리 (MongoDB + Kafka)
+│   └── domain: Registration
 ├── payment-service/        # 결제 — SAGA Orchestrator (MySQL)
-├── point-service/          # 포인트 — SELECT FOR UPDATE (MySQL + Redis)
+│   └── domain: Payment, Card, CompensationOutbox
+├── point-service/          # 포인트 — SELECT FOR UPDATE + Redis 분산 락 (MySQL + Redis)
+│   └── domain: Point, PointHistory
 ├── search-service/         # 검색 + 실시간 랭킹 (ES + MongoDB)
+│   └── domain: SearchDocument(ES), SearchLog, OrderRecord
+├── load-test/              # k6 부하 테스트 스크립트
+├── docker-compose.yml      # 6개 서비스 + 인프라 통합 배포
 └── src/frontend/           # React
+```
+
+<br>
+
+## 데이터베이스 구조
+
+> 물리 인스턴스는 MySQL 1대, MongoDB 1대를 공유하되, 서비스별로 논리 스키마를 분리하고 전용 계정으로 접근 권한을 격리했다. (`mysql-init.sql`, `mongo-init.js`에서 서비스별 DB + 유저 생성, 자기 DB에만 읽기/쓰기 권한 부여)
+>
+> 서비스 간 FK 없이 userId, orderId로 논리적 참조. 통신은 Feign/Kafka만 사용.
+>
+> `──→` 같은 DB 내 참조 (JPA)  ·  `···→` 서비스 간 논리적 참조 (FK 없음)
+
+### MySQL
+
+```
+┌─── point_db ──────────────────────────────────────────────────────────────────┐
+│                                                                               │
+│  point                              point_history                             │
+│  ┌────────────────────────┐   1:N   ┌─────────────────────────┐              │
+│  │ PK id                  │◄────────│ PK id                   │              │
+│  │ UK user_id  ···→ member│         │    user_id              │              │
+│  │    total_points        │         │    amount               │              │
+│  │    available_points    │         │    type (EARN/USE/CANCEL)│              │
+│  │    version             │         │    description          │              │
+│  └────────────────────────┘         │    created_at           │              │
+│                                     └─────────────────────────┘              │
+│  SELECT FOR UPDATE (비관적 락) + Redis 분산 락 (Redisson)                      │
+└───────────────────────────────────────────────────────────────────────────────┘
+
+┌─── payment_db ────────────────────────────────────────────────────────────────┐
+│                                                                               │
+│  payment                            cards                                     │
+│  ┌────────────────────────┐   N:1   ┌─────────────────────────┐              │
+│  │ PK id                  │────────→│ PK id                   │              │
+│  │    order_id ···→ order  │         │    user_id  ···→ member │              │
+│  │    user_id  ···→ member│         │    card_number          │              │
+│  │    title, quantity     │         │    card_company         │              │
+│  │    unit_price          │         │    credit_limit         │              │
+│  │    total_amount        │         │    used_amount          │              │
+│  │    point_used          │         │    is_default           │              │
+│  │    card_amount         │         │    status               │              │
+│  │    status              │         └─────────────────────────┘              │
+│  │    payment_method      │                                                   │
+│  │    approval_number     │  compensation_outbox                              │
+│  │    hmac_signature      │  ┌─────────────────────────┐                     │
+│  │    created_at          │  │ PK id                   │                     │
+│  │    completed_at        │  │    order_id ···→ order   │                     │
+│  └────────────────────────┘  │    user_id  ···→ member  │                     │
+│                               │    type (POINT_RESTORE / │                     │
+│                               │      CARD_REFUND /       │                     │
+│                               │      STOCK_RESTORE)      │                     │
+│                               │    amount, target_id     │                     │
+│                               │    status (PENDING /     │                     │
+│                               │      COMPLETED / FAILED) │                     │
+│                               │    retry_count (max 5)   │                     │
+│                               └─────────────────────────┘                     │
+│  SAGA 보상 + CompensationOutbox (30초 폴링 재시도) + HMAC 서명 검증             │
+└───────────────────────────────────────────────────────────────────────────────┘
+```
+
+### MongoDB + Elasticsearch
+
+```
+┌─── member-db ─────────────────────────────────────────────────────────────────┐
+│                                                                               │
+│  member                             note                                      │
+│  ┌────────────────────────┐   1:N   ┌─────────────────────────┐              │
+│  │ _id (pid)              │◄────────│ _id                     │              │
+│  │ name, pwd              │         │ sender  ──→ member._id  │              │
+│  │ phone, email           │◄────────│ receiver ──→ member._id │              │
+│  │ address                │         │ title, comment, time    │              │
+│  └────────────────────────┘         └─────────────────────────┘              │
+│                                                                               │
+│  ※ member._id는 모든 서비스에서 userId로 논리적 참조                             │
+└───────────────────────────────────────────────────────────────────────────────┘
+
+┌─── product-db ────────────────────────────────────────────────────────────────┐
+│                                                                               │
+│  sell (상품)                         survey (수량조사)     like (찜)            │
+│  ┌────────────────────────┐         ┌──────────────┐     ┌──────────────┐    │
+│  │ _id                    │         │ _id          │     │ _id          │    │
+│  │ title                  │         │ title        │     │ pid ··→ sell │    │
+│  │ managerId ···→ member  │         │ userId       │     │ name         │    │
+│  │ price, stock           │         │ count        │     │ start/endDate│    │
+│  │ min_count              │         └──────────────┘     │ end          │    │
+│  │ category, info         │                               └──────────────┘    │
+│  │ start/finishDate       │                                                   │
+│  │ mainPhoto, sizePhoto   │  stock: findAndModify 원자적 차감                  │
+│  └────────────────────────┘                                                   │
+└───────────────────────────────────────────────────────────────────────────────┘
+
+┌─── order-db ──────────────────────────────────────────────────────────────────┐
+│                                                                               │
+│  registration (주문)                                                          │
+│  ┌────────────────────────┐                                                   │
+│  │ _id                    │  → Kafka(order-events) 발행                       │
+│  │ title    ···→ sell     │    ├→ point-service: 적립                         │
+│  │ userId   ···→ member   │    ├→ search-service: 랭킹 재계산                 │
+│  │ total_Count, sizeCount │    └→ product-service: 캐시 갱신                  │
+│  │ method (현장배부/택배)  │                                                   │
+│  │ status (PENDING /      │                                                   │
+│  │   CONFIRMED/CANCELLED) │                                                   │
+│  │ createdAt              │                                                   │
+│  └────────────────────────┘                                                   │
+└───────────────────────────────────────────────────────────────────────────────┘
+
+┌─── search-db (MongoDB) + Elasticsearch ───────────────────────────────────────┐
+│                                                                               │
+│  search_log        order_record        products (ES 인덱스)                    │
+│  ┌──────────────┐  ┌──────────────┐   ┌──────────────────────┐               │
+│  │ _id          │  │ _id          │   │ id                   │               │
+│  │ keyword      │  │ title        │   │ title  (nori 분석기)  │               │
+│  │ userId       │  │ count        │   │ info   (nori 분석기)  │               │
+│  │ searchedAt   │  │ orderedAt    │   │ category (Keyword)   │               │
+│  └──────────────┘  └──────────────┘   │ price, stock         │               │
+│                                        │ managerId            │               │
+│  랭킹 = 검색횟수 × 0.4 + 주문량 × 0.6  │ start/finishDate     │               │
+│                   (최근 1시간)          └──────────────────────┘               │
+│                                        ↑ sell (product-db)에서 동기화           │
+└───────────────────────────────────────────────────────────────────────────────┘
 ```
 
 <br>
