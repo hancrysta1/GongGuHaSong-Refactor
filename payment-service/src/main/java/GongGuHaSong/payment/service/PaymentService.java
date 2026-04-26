@@ -109,13 +109,8 @@ public class PaymentService {
 
             int finalAmount = totalAmount - pointUsed - cardAmount;
 
-            // ── 장애 주입 (Chaos Engineering) — k6 부하 테스트 시 주석 해제 ──
-            // 포인트 차감 후, DB 저장 전에 10% 확률로 예외 발생
-            // SAGA 보상이 없으면 → 포인트 차감만 되고 결제 실패 → 유실
-            // SAGA 보상이 있으면 → 포인트 복구 → 유실 0
-            // if (Math.random() < 0.1) {
-            //     throw new RuntimeException("장애 주입: 결제 저장 전 서버 오류 (Chaos Engineering)");
-            // }
+            // 부하 테스트 시 클라이언트(k6) 측에서 결제 요청 타임아웃을 3초로 짧게 걸어
+            // 응답 지연 누적으로 인한 자연 실패를 유도 → SAGA 보상 동작을 검증한다.
 
             // ── STEP 3: 결제 기록 저장 ──
             Payment payment = new Payment();

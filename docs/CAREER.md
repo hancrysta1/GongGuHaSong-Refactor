@@ -13,7 +13,7 @@
 ### 프로젝트 1: SAGA 보상 트랜잭션 + CompensationOutbox
 
 - **설명**: MSA 분산 환경에서 결제 실패 시 포인트가 유실되는 문제를 발견하고, SAGA 보상 트랜잭션 + Outbox 재시도로 최종 유실 0건 달성
-- **사용 기술**: Spring Boot, OpenFeign, MySQL, k6 (Chaos Engineering)
+- **사용 기술**: Spring Boot, OpenFeign, MySQL, k6 (타임아웃 단축 + 부하로 자연 실패 유도)
 - **기여도**: 100%
 - **진행 내용**
 
@@ -26,7 +26,7 @@
 
 - **주요 성과**
     - 포인트 유실률 90.4% → 최종 유실 0건 (Eventual Consistency)
-    - Chaos Engineering (장애 주입 10%) + 300명 동시 부하 환경에서 정량 검증
+    - 결제 요청 타임아웃을 3초로 강제 설정 + 300명 동시 부하 환경에서 자연 실패를 유도해 정량 검증
     - "보상을 적용했더니 오히려 악화" → 원인 분석 (커넥션 풀 고갈) → Outbox로 해결하는 과정을 경험
 
 ---

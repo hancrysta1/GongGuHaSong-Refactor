@@ -284,7 +284,7 @@ MongoDB 트랜잭션으로도 해결할 수 있었다. 하지만.
 | Redis | 캐시 | 상품 캐시, 랭킹 캐시, 포인트 캐시 (다중 인스턴스 대응) |
 | WebSocket (STOMP) | 실시간 통신 | 실시간 검색 랭킹 push (polling 대비 트래픽 절감) |
 | Docker Compose | 배포 | 6개 서비스 + 인프라 통합 배포 |
-| k6 | 부하 테스트 | Chaos Engineering 기반 정합성 검증 |
+| k6 | 부하 테스트 | 결제 3초 타임아웃 + 부하로 자연 실패 유도하여 정합성 검증 |
 | React | 프론트엔드 | AI 도구 활용하여 개발 (백엔드 집중) |
 
 ---
@@ -334,7 +334,7 @@ MongoDB 트랜잭션으로도 해결할 수 있었다. 하지만.
 
 결제 도메인에서 겪은 세 가지 문제를 순차적으로 해결한 과정.
 
-1. 분산 트랜잭션 (SAGA): 결제 실패 시 포인트 유실 → Chaos Engineering(장애 주입 10%)으로 7,263건 중 656건 유실 확인 (90.4%) → SAGA + CompensationOutbox 적용 → 최종 유실 0건 (100% 복구)
+1. 분산 트랜잭션 (SAGA): 결제 실패 시 포인트 유실 → 결제 3초 타임아웃 + 부하로 자연 실패를 유도해 7,263건 중 656건 유실 확인 (90.4%) → SAGA + CompensationOutbox 적용 → 최종 유실 0건 (100% 복구)
 2. 동시성 제어: SAGA 적용 후 남은 18건 추적 → Lost Update/Overdraft 발견 → MongoDB `findAndModify`로 1차 해결 → 마이너스 잔액 0건
 3. MongoDB → MySQL 리팩토링: `findAndModify`로 차감은 안전하지만 이력과 별도 연산 → MongoDB 트랜잭션 검토 → 금전 도메인 특성상 RDBMS가 적합 → MySQL `@Transactional` + `SELECT FOR UPDATE` → 차감=이력 100% 일치, ACID 4속성 전부 검증
 
@@ -400,11 +400,11 @@ MongoDB 트랜잭션으로도 해결할 수 있었다. 하지만.
 
 | 항목 | 수치 |
 |------|------|
-| 부하 테스트 규모 | 동시 300명 + 장애 주입 10% |
+| 부하 테스트 규모 | 동시 300명 + 결제 3초 타임아웃 (자연 실패 유도) |
 | SAGA 도입 효과 | 포인트 유실률 90.4% → 0% (SAGA + Outbox) |
 | 동시성 제어 | 마이너스 잔액 0건, 이중 차감 0건, 차감=이력 100% 일치 |
 | DB 리팩토링 | point/payment-service MongoDB → MySQL 전환 (Polyglot Persistence) |
-| 정상 상황 성공률 | 99.71% (장애 없이 동시 300명) |
+| 정상 상황 성공률 | 99.71% (타임아웃 여유, 동시 300명) |
 | 인프라 정리 | Eureka + API Gateway 제거 (Docker Compose 서비스명 호출로 대체) |
 
 ### MySQL 전환 후 ACID 검증

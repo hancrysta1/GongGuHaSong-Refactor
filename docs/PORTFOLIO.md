@@ -22,7 +22,7 @@ MSA 분산 환경에서 결제 장애 시 포인트 유실 90.4% → SAGA + Outb
 - 결제 시스템 신규 구축 (포인트/카드, SAGA 보상 트랜잭션, 동시성 제어).
 - Elasticsearch + Nori 한국어 검색 엔진 + 실시간 랭킹 구축.
 - MongoDB → MySQL 리팩토링 (금전 도메인 ACID 보장).
-- k6 부하 테스트 (Chaos Engineering, 동시 300명 22,000건).
+- k6 부하 테스트 (결제 타임아웃 3초 강제 + 부하로 자연 실패 유도, 동시 300명 22,000건).
 - Eureka/API Gateway 제거 (Docker Compose 서비스명 호출로 대체).
 
 ### 팀이 한 것 (원본)
@@ -150,7 +150,7 @@ MSA에서는 서비스 간 DB가 물리적으로 분리되어 있어 외래키(F
 | Database | MongoDB, MySQL, Elasticsearch (Nori), Redis |
 | Message | Apache Kafka, WebSocket (STOMP) |
 | Infra | Docker Compose |
-| Test | k6 (Chaos Engineering 부하 테스트) |
+| Test | k6 (타임아웃 단축 + 부하로 자연 실패 유도) |
 | Frontend | React 18 |
 
 ---
@@ -176,27 +176,22 @@ payment-service와 point-service가 분리된 MSA 구조에서, 결제 흐름은
 pointRestClient.usePoints(userId, pointUsed, "결제");
 pointDeducted = true;  // ← 여기까지 성공
 
-// 장애 주입: 10% 확률로 여기서 터짐
-// if (Math.random() < 0.1) {
-//     throw new RuntimeException("장애 주입");
-// }
-
-// STEP 3: DB 저장 ← 여기서 실패하면?
+// STEP 3: DB 저장 ← 부하 중 응답 지연으로 클라이언트 타임아웃 시?
 Payment saved = paymentRepository.save(payment);
 ```
 
-**포인트는 차감됐는데 결제 기록은 없다 → 유실.**
+**포인트는 차감됐는데 클라이언트는 결제 실패로 인지 → 유실.**
 
 포인트 차감을 Feign 동기 호출로 하는 이유는, 잔액 확인 → 차감 → 결제 진행의 순서가 보장돼야 하기 때문이다. Kafka(비동기)로 하면 카드 결제가 먼저 완료된 후에 잔액 부족을 알게 되는 문제가 생긴다. (반면 적립은 실패해도 나중에 보상하면 되므로 Kafka 비동기로 처리한다.)
 
 그런데 동기든 비동기든 MSA에서는 서비스 간 트랜잭션이 분리된다. 모놀리식이었으면 같은 DB, 같은 `@Transactional`로 롤백되지만, MSA에서는 point-service가 별도 DB를 가지고 있고 Feign 호출 시점에 point-service의 트랜잭션이 이미 커밋된다. payment-service에서 롤백해도 point-service의 차감은 되돌릴 수 없다.
 
-**부하 테스트로 확인** — k6로 300명 동시 결제 + 10% 장애 주입:
+**부하 테스트로 확인** — k6로 300명 동시 결제, **결제 요청 타임아웃을 3초로 강제**해서 부하가 올라가면 일부 결제가 응답 대기 중 끊기도록 자연 실패를 유도:
 
 ```
-총 결제:    7,263건
-장애 발생:  ~726건
-포인트 유실: 656건 (유실률 90.4%)
+총 결제:      7,263건
+타임아웃 실패: ~726건 (3초 초과로 클라이언트가 끊음)
+포인트 유실:   656건 (유실률 90.4%)
 ```
 
 ### 2. 해결 1차: SAGA 보상 트랜잭션 → 오히려 악화
